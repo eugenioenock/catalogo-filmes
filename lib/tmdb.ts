@@ -1,5 +1,7 @@
 import "server-only";
 
+import { anoDe } from "./formatar";
+
 const API = "https://api.themoviedb.org/3";
 const IMAGENS = "https://image.tmdb.org/t/p";
 
@@ -46,7 +48,11 @@ export async function tmdbGet<T>(
   }
   if (resposta.status === 404) throw new FilmeNaoEncontradoError("Não encontrado no TMDB.");
   if (!resposta.ok) throw new TmdbIndisponivelError(`TMDB respondeu ${resposta.status}.`);
-  return (await resposta.json()) as T;
+  try {
+    return (await resposta.json()) as T;
+  } catch {
+    throw new TmdbIndisponivelError("O TMDB devolveu uma resposta inválida.");
+  }
 }
 
 export async function listarStreamings(): Promise<Streaming[]> {
@@ -63,4 +69,125 @@ export async function listarStreamings(): Promise<Streaming[]> {
       nome: p.provider_name,
       logoUrl: imagemUrl(p.logo_path, "w92")!,
     }));
+}
+
+export type FilmeResumo = {
+  id: number;
+  titulo: string;
+  ano: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  sinopse: string;
+  nota: number;
+  generos: string[];
+};
+export type PaginaDeFilmes = { filmes: FilmeResumo[]; pagina: number; totalPaginas: number };
+export type FilmeDetalhe = FilmeResumo & { duracaoMin: number | null; streamings: Streaming[] };
+
+type TmdbFilme = {
+  id: number;
+  title: string;
+  release_date?: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview?: string | null;
+  vote_average: number;
+};
+type TmdbPagina = { page: number; total_pages: number; results: (TmdbFilme & { genre_ids: number[] })[] };
+type TmdbProvidersBR = { results?: { BR?: { flatrate?: TmdbProvider[] } } };
+
+const MAX_PAGINAS = 500;
+
+function resumir(f: TmdbFilme, generos: string[]): FilmeResumo {
+  return {
+    id: f.id,
+    titulo: f.title,
+    ano: anoDe(f.release_date),
+    posterUrl: imagemUrl(f.poster_path, "w342"),
+    backdropUrl: imagemUrl(f.backdrop_path, "w1280"),
+    sinopse: f.overview ?? "",
+    nota: f.vote_average,
+    generos,
+  };
+}
+
+function streamingsDe(dados: TmdbProvidersBR | undefined): Streaming[] {
+  return (dados?.results?.BR?.flatrate ?? []).map((p) => ({
+    id: p.provider_id,
+    nome: p.provider_name,
+    logoUrl: imagemUrl(p.logo_path, "w92") ?? "",
+  }));
+}
+
+async function montarPagina(dados: TmdbPagina): Promise<PaginaDeFilmes> {
+  const { genres } = await tmdbGet<{ genres: { id: number; name: string }[] }>(
+    "/genre/movie/list",
+    { language: "pt-BR" },
+  );
+  const nomes = new Map(genres.map((g) => [g.id, g.name]));
+  return {
+    filmes: dados.results.map((f) =>
+      resumir(
+        f,
+        f.genre_ids.flatMap((id) => nomes.get(id) ?? []),
+      ),
+    ),
+    pagina: dados.page,
+    totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS),
+  };
+}
+
+export async function listarFilmes(o: {
+  streaming: number | null;
+  pagina: number;
+}): Promise<PaginaDeFilmes> {
+  const params: Record<string, string> = {
+    watch_region: "BR",
+    with_watch_monetization_types: "flatrate",
+    language: "pt-BR",
+    sort_by: "popularity.desc",
+    page: String(o.pagina),
+  };
+  if (o.streaming !== null) params.with_watch_providers = String(o.streaming);
+  return montarPagina(await tmdbGet<TmdbPagina>("/discover/movie", params));
+}
+
+export async function buscarFilmes(o: {
+  texto: string;
+  streaming: number | null;
+  pagina: number;
+}): Promise<PaginaDeFilmes> {
+  const dados = await tmdbGet<TmdbPagina>("/search/movie", {
+    query: o.texto,
+    language: "pt-BR",
+    page: String(o.pagina),
+  });
+  const disponibilidade = await Promise.all(
+    dados.results.map((f) => tmdbGet<TmdbProvidersBR>(`/movie/${f.id}/watch/providers`)),
+  );
+  const results = dados.results.filter((_, i) => {
+    const streamings = streamingsDe(disponibilidade[i]);
+    return o.streaming === null
+      ? streamings.length > 0
+      : streamings.some((s) => s.id === o.streaming);
+  });
+  return montarPagina({ ...dados, results });
+}
+
+export async function detalharFilme(id: number): Promise<FilmeDetalhe> {
+  const d = await tmdbGet<
+    TmdbFilme & {
+      runtime?: number | null;
+      genres: { id: number; name: string }[];
+      "watch/providers"?: TmdbProvidersBR;
+    }
+  >(`/movie/${id}`, { language: "pt-BR", append_to_response: "watch/providers" });
+  return {
+    ...resumir(
+      d,
+      d.genres.map((g) => g.name),
+    ),
+    duracaoMin: d.runtime || null,
+    streamings: streamingsDe(d["watch/providers"]),
+  };
 }

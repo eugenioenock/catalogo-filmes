@@ -5,7 +5,10 @@ vi.mock("server-only", () => ({}));
 import {
   FilmeNaoEncontradoError,
   TmdbIndisponivelError,
+  buscarFilmes,
+  detalharFilme,
   imagemUrl,
+  listarFilmes,
   listarStreamings,
   tmdbGet,
 } from "./tmdb";
@@ -15,6 +18,44 @@ const fetchMock = vi.fn();
 function responder(json: unknown, status = 200) {
   return new Response(JSON.stringify(json), { status });
 }
+
+function urlChamada(trecho: string): string {
+  const chamada = fetchMock.mock.calls.find(([url]) => String(url).includes(trecho));
+  if (!chamada) throw new Error(`Nenhuma chamada contendo ${trecho}`);
+  return String(chamada[0]);
+}
+
+// Roteia o fetch por trecho da URL (a primeira regra que combina vence).
+function rotear(rotas: Record<string, unknown | Response>) {
+  fetchMock.mockImplementation(async (url: unknown) => {
+    const alvo = String(url);
+    for (const [trecho, corpo] of Object.entries(rotas)) {
+      if (alvo.includes(trecho)) return corpo instanceof Response ? corpo : responder(corpo);
+    }
+    throw new Error(`Sem rota para ${alvo}`);
+  });
+}
+
+function filme(id: number, extra: Record<string, unknown> = {}) {
+  return {
+    id,
+    title: `Filme ${id}`,
+    release_date: "2024-05-01",
+    poster_path: `/p${id}.jpg`,
+    backdrop_path: `/b${id}.jpg`,
+    overview: `Sinopse ${id}`,
+    vote_average: 7.5,
+    genre_ids: [28],
+    ...extra,
+  };
+}
+
+const generos = { genres: [{ id: 28, name: "Ação" }] };
+const provider = (id: number, nome = "S", logo = "/l.png") => ({
+  provider_id: id,
+  provider_name: nome,
+  logo_path: logo,
+});
 
 describe("tmdb", () => {
   beforeEach(() => {
@@ -78,5 +119,135 @@ describe("tmdb", () => {
       }),
     );
     expect((await listarStreamings()).map((s) => s.id)).toEqual([2]);
+  });
+  it("200 com corpo que não é JSON vira TmdbIndisponivelError", async () => {
+    fetchMock.mockResolvedValue(new Response("<html>oops</html>", { status: 200 }));
+    await expect(tmdbGet("/x")).rejects.toBeInstanceOf(TmdbIndisponivelError);
+  });
+
+  it("listarFilmes chama discover com BR, flatrate, pt-BR, popularidade e página", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": { page: 2, total_pages: 3, results: [filme(1)] },
+    });
+    const r = await listarFilmes({ streaming: null, pagina: 2 });
+    const url = new URL(urlChamada("/discover/movie"));
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      watch_region: "BR",
+      with_watch_monetization_types: "flatrate",
+      language: "pt-BR",
+      sort_by: "popularity.desc",
+      page: "2",
+    });
+    expect(url.searchParams.has("with_watch_providers")).toBe(false);
+    expect(r).toMatchObject({ pagina: 2, totalPaginas: 3 });
+    expect(r.filmes[0]).toMatchObject({
+      id: 1,
+      ano: "2024",
+      generos: ["Ação"],
+      posterUrl: "https://image.tmdb.org/t/p/w342/p1.jpg",
+      backdropUrl: "https://image.tmdb.org/t/p/w1280/b1.jpg",
+    });
+  });
+  it("listarFilmes descarta ids de gênero desconhecidos", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": { page: 1, total_pages: 1, results: [filme(1, { genre_ids: [28, 999] })] },
+    });
+    expect((await listarFilmes({ streaming: null, pagina: 1 })).filmes[0].generos).toEqual(["Ação"]);
+  });
+  it("listarFilmes com streaming envia with_watch_providers", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": { page: 1, total_pages: 1, results: [] },
+    });
+    await listarFilmes({ streaming: 8, pagina: 1 });
+    expect(new URL(urlChamada("/discover/movie")).searchParams.get("with_watch_providers")).toBe("8");
+  });
+  it("totalPaginas é limitado a 500", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": { page: 1, total_pages: 38000, results: [filme(1)] },
+    });
+    expect((await listarFilmes({ streaming: null, pagina: 1 })).totalPaginas).toBe(500);
+  });
+  it("filme sem pôster, backdrop, sinopse e data vira null/vazio", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": {
+        page: 1,
+        total_pages: 1,
+        results: [filme(1, { poster_path: null, backdrop_path: null, overview: "", release_date: "" })],
+      },
+    });
+    expect((await listarFilmes({ streaming: null, pagina: 1 })).filmes[0]).toMatchObject({
+      posterUrl: null,
+      backdropUrl: null,
+      sinopse: "",
+      ano: null,
+    });
+  });
+
+  describe("buscarFilmes", () => {
+    function rotasDeBusca(provedorDoFilme2: unknown) {
+      rotear({
+        "/genre/movie/list": generos,
+        "/search/movie": { page: 1, total_pages: 1, results: [filme(1), filme(2), filme(3)] },
+        "/movie/1/watch/providers": { results: { BR: { flatrate: [provider(8, "Netflix")] } } },
+        "/movie/2/watch/providers": { results: { BR: provedorDoFilme2 } },
+        "/movie/3/watch/providers": { results: {} },
+      });
+    }
+
+    it("codifica o texto e mantém só quem tem flatrate no BR", async () => {
+      rotasDeBusca({ rent: [provider(2)] });
+      const r = await buscarFilmes({ texto: "Tom & Jerry", streaming: null, pagina: 1 });
+      expect(urlChamada("/search/movie")).toContain("query=Tom+%26+Jerry");
+      expect(new URL(urlChamada("/search/movie")).searchParams.get("query")).toBe("Tom & Jerry");
+      expect(r.filmes.map((f) => f.id)).toEqual([1]);
+    });
+    it("com streaming mantém só quem está naquele serviço", async () => {
+      rotasDeBusca({ flatrate: [provider(337)] });
+      const r = await buscarFilmes({ texto: "x", streaming: 337, pagina: 1 });
+      expect(r.filmes.map((f) => f.id)).toEqual([2]);
+    });
+  });
+
+  it("detalharFilme pede append_to_response=watch/providers e monta o detalhe", async () => {
+    rotear({
+      "/movie/10?": {
+        ...filme(10, { title: "T" }),
+        runtime: 135,
+        genres: [{ id: 28, name: "Ação" }],
+        "watch/providers": { results: { BR: { flatrate: [provider(8, "Netflix", "/n.png")] } } },
+      },
+    });
+    const d = await detalharFilme(10);
+    expect(new URL(urlChamada("/movie/10")).searchParams.get("append_to_response")).toBe(
+      "watch/providers",
+    );
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/genre/movie/list"))).toBe(false);
+    expect(d).toMatchObject({
+      id: 10,
+      titulo: "T",
+      duracaoMin: 135,
+      generos: ["Ação"],
+      streamings: [{ id: 8, nome: "Netflix", logoUrl: "https://image.tmdb.org/t/p/w92/n.png" }],
+    });
+  });
+  it("detalharFilme sem dados do BR devolve streamings vazio e duração null", async () => {
+    rotear({
+      "/movie/11?": {
+        ...filme(11),
+        runtime: 0,
+        genres: [],
+        "watch/providers": { results: { US: { flatrate: [provider(8)] } } },
+      },
+    });
+    expect(await detalharFilme(11)).toMatchObject({ streamings: [], duracaoMin: null });
+  });
+  it("detalharFilme repassa 404 como FilmeNaoEncontradoError", async () => {
+    rotear({ "/movie/999?": responder({}, 404) });
+    await expect(detalharFilme(999)).rejects.toBeInstanceOf(FilmeNaoEncontradoError);
   });
 });
