@@ -11,6 +11,8 @@ describe("lerFiltros", () => {
   it.each(["netflix", "-1", "8abc", "0"])("streaming inválido %s vira null", (s) =>
     expect(lerFiltros({ streaming: s }).streaming).toBeNull());
   it("tira espaços da busca", () => expect(lerFiltros({ busca: "  Duna " }).busca).toBe("Duna"));
+  it("limita a busca a 100 caracteres", () =>
+    expect(lerFiltros({ busca: "a".repeat(150) }).busca).toHaveLength(100));
   it("busca só com espaços vira null", () => expect(lerFiltros({ busca: "   " }).busca).toBeNull());
   it("usa o primeiro valor quando o parâmetro se repete", () =>
     expect(lerFiltros({ pagina: ["3", "7"] }).pagina).toBe(3));

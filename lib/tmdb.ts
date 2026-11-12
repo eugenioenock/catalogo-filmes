@@ -1,9 +1,13 @@
 import "server-only";
 
+import { cache } from "react";
 import { anoDe } from "./formatar";
 
 const API = "https://api.themoviedb.org/3";
 const IMAGENS = "https://image.tmdb.org/t/p";
+
+// Lojas (aluguel/compra) e serviços gratuitos: não são assinatura.
+const IDS_FORA_DA_ASSINATURA = [2, 3, 10, 68, 2791];
 
 export type Streaming = { id: number; nome: string; logoUrl: string };
 
@@ -42,6 +46,7 @@ export async function tmdbGet<T>(
     resposta = await fetch(url, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(10_000),
     });
   } catch {
     throw new TmdbIndisponivelError("Não foi possível falar com o TMDB.");
@@ -61,7 +66,12 @@ export async function listarStreamings(): Promise<Streaming[]> {
     language: "pt-BR",
   });
   return dados.results
-    .filter((p) => p.display_priorities?.BR !== undefined && p.logo_path)
+    .filter(
+      (p) =>
+        p.display_priorities?.BR !== undefined &&
+        p.logo_path &&
+        !IDS_FORA_DA_ASSINATURA.includes(p.provider_id),
+    )
     .sort((a, b) => a.display_priorities!.BR - b.display_priorities!.BR)
     .slice(0, 10)
     .map((p) => ({
@@ -162,11 +172,13 @@ export async function buscarFilmes(o: {
     language: "pt-BR",
     page: String(o.pagina),
   });
-  const disponibilidade = await Promise.all(
+  const disponibilidade = await Promise.allSettled(
     dados.results.map((f) => tmdbGet<TmdbProvidersBR>(`/movie/${f.id}/watch/providers`)),
   );
   const results = dados.results.filter((_, i) => {
-    const streamings = streamingsDe(disponibilidade[i]);
+    const d = disponibilidade[i];
+    if (d.status === "rejected") return false;
+    const streamings = streamingsDe(d.value);
     return o.streaming === null
       ? streamings.length > 0
       : streamings.some((s) => s.id === o.streaming);
@@ -174,7 +186,7 @@ export async function buscarFilmes(o: {
   return montarPagina({ ...dados, results });
 }
 
-export async function detalharFilme(id: number): Promise<FilmeDetalhe> {
+export const detalharFilme = cache(async (id: number): Promise<FilmeDetalhe> => {
   const d = await tmdbGet<
     TmdbFilme & {
       runtime?: number | null;
@@ -190,4 +202,4 @@ export async function detalharFilme(id: number): Promise<FilmeDetalhe> {
     duracaoMin: d.runtime || null,
     streamings: streamingsDe(d["watch/providers"]),
   };
-}
+});

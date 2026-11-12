@@ -1,6 +1,13 @@
 "use client";
 
-export default function Error({ retry }: { error: Error; retry: () => void }) {
+import { useEffect } from "react";
+import Link from "next/link";
+
+export default function Error({ error, retry }: { error: Error; retry: () => void }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-16">
       <p className="text-lg">Não conseguimos carregar os filmes agora.</p>
@@ -11,6 +18,9 @@ export default function Error({ retry }: { error: Error; retry: () => void }) {
       >
         Tentar de novo
       </button>
+      <Link href="/" className="text-amber-500 hover:underline">
+        ← Voltar ao catálogo
+      </Link>
     </main>
   );
 }

@@ -114,11 +114,35 @@ describe("tmdb", () => {
       responder({
         results: [
           { provider_id: 1, provider_name: "A", logo_path: "/a.png", display_priorities: { US: 1 } },
-          { provider_id: 2, provider_name: "B", logo_path: "/b.png", display_priorities: { BR: 3 } },
+          { provider_id: 20, provider_name: "B", logo_path: "/b.png", display_priorities: { BR: 3 } },
         ],
       }),
     );
-    expect((await listarStreamings()).map((s) => s.id)).toEqual([2]);
+    expect((await listarStreamings()).map((s) => s.id)).toEqual([20]);
+  });
+  it("listarStreamings exclui lojas/gratuitos e serviços sem logo, e completa os 10", async () => {
+    const results = Array.from({ length: 14 }, (_, i) => ({
+      provider_id: i + 100,
+      provider_name: `S${i + 100}`,
+      logo_path: `/l${i}.png`,
+      display_priorities: { BR: i + 3 },
+    }));
+    results.push({ provider_id: 2, provider_name: "Apple TV Store", logo_path: "/a.png", display_priorities: { BR: 1 } });
+    results.push({ provider_id: 2791, provider_name: "JustWatch TV", logo_path: "/j.png", display_priorities: { BR: 2 } });
+    results.push({ provider_id: 555, provider_name: "SemLogo", logo_path: null as unknown as string, display_priorities: { BR: 0 } });
+    fetchMock.mockResolvedValue(responder({ results }));
+    const lista = await listarStreamings();
+    const ids = lista.map((s) => s.id);
+    expect(lista).toHaveLength(10);
+    expect(ids).not.toContain(2);
+    expect(ids).not.toContain(2791);
+    expect(ids).not.toContain(555);
+    expect(ids[0]).toBe(100);
+  });
+  it("timeout vira TmdbIndisponivelError e o fetch recebe um AbortSignal", async () => {
+    fetchMock.mockRejectedValue(new DOMException("timeout", "TimeoutError"));
+    await expect(tmdbGet("/x")).rejects.toBeInstanceOf(TmdbIndisponivelError);
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
   it("200 com corpo que não é JSON vira TmdbIndisponivelError", async () => {
     fetchMock.mockResolvedValue(new Response("<html>oops</html>", { status: 200 }));
@@ -210,6 +234,17 @@ describe("tmdb", () => {
       rotasDeBusca({ flatrate: [provider(337)] });
       const r = await buscarFilmes({ texto: "x", streaming: 337, pagina: 1 });
       expect(r.filmes.map((f) => f.id)).toEqual([2]);
+    });
+    it("uma consulta de disponibilidade que falha não derruba a busca", async () => {
+      rotear({
+        "/genre/movie/list": generos,
+        "/search/movie": { page: 1, total_pages: 1, results: [filme(1), filme(2), filme(3)] },
+        "/movie/1/watch/providers": { results: { BR: { flatrate: [provider(8)] } } },
+        "/movie/2/watch/providers": responder({}, 500),
+        "/movie/3/watch/providers": { results: { BR: { flatrate: [provider(9)] } } },
+      });
+      const r = await buscarFilmes({ texto: "x", streaming: null, pagina: 1 });
+      expect(r.filmes.map((f) => f.id)).toEqual([1, 3]);
     });
   });
 

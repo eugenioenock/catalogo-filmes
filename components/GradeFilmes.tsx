@@ -1,11 +1,19 @@
 import type { FilmeResumo } from "@/lib/tmdb";
 import CartaoFilme from "./CartaoFilme";
 
-export default function GradeFilmes({ filmes }: { filmes: FilmeResumo[] }) {
+export default function GradeFilmes({
+  filmes,
+  haMaisPaginas,
+}: {
+  filmes: FilmeResumo[];
+  haMaisPaginas: boolean;
+}) {
   if (filmes.length === 0) {
     return (
       <p className="py-16 text-center text-neutral-400">
-        Nenhum filme com esse nome está no streaming agora.
+        {haMaisPaginas
+          ? "Nenhum resultado nesta página. Veja a próxima."
+          : "Nenhum filme com esse nome está no streaming agora."}
       </p>
     );
   }

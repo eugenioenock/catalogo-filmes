@@ -22,19 +22,19 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   ]);
   const { filmes, totalPaginas } = resultado;
 
-  if (pagina > totalPaginas && totalPaginas > 0) {
-    redirect(montarHref(filtros, { pagina: totalPaginas }));
+  if (pagina > Math.max(totalPaginas, 1)) {
+    redirect(montarHref(filtros, { pagina: Math.max(totalPaginas, 1) }));
   }
 
   const mostrarBanner = pagina === 1 && !busca && filmes.length > 0;
 
   return (
     <>
-      <Cabecalho busca={busca} streaming={streaming} />
+      <Cabecalho busca={busca} streaming={streaming} nomeComoTitulo />
       {mostrarBanner && <Banner filme={filmes[0]} />}
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
         <FiltroStreamings streamings={streamings} filtros={filtros} />
-        <GradeFilmes filmes={filmes} />
+        <GradeFilmes filmes={filmes} haMaisPaginas={pagina < totalPaginas} />
         <Paginacao filtros={filtros} totalPaginas={totalPaginas} />
       </main>
     </>

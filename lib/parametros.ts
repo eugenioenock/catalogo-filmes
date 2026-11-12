@@ -14,7 +14,7 @@ function inteiroPositivo(valor: string | undefined): number | null {
 
 export function lerFiltros(params: Record<string, string | string[] | undefined>): FiltrosCatalogo {
   const pagina = inteiroPositivo(primeiro(params.pagina)) ?? 1;
-  const busca = primeiro(params.busca)?.trim() || null;
+  const busca = primeiro(params.busca)?.trim().slice(0, 100) || null;
   return {
     streaming: inteiroPositivo(primeiro(params.streaming)),
     busca,

@@ -8,6 +8,7 @@ export default function CampoBusca({ busca, streaming }: Props) {
     <form method="get" action="/" className="flex w-full gap-2 sm:w-auto">
       <input
         type="search"
+        maxLength={100}
         name="busca"
         defaultValue={busca ?? ""}
         placeholder="Buscar filmes"
