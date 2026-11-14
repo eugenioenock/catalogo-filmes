@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import BotoesMarcar from "@/components/BotoesMarcar";
 import Cabecalho from "@/components/Cabecalho";
 import InfoFilme from "@/components/InfoFilme";
 import LuzAmbiente from "@/components/LuzAmbiente";
@@ -110,6 +111,11 @@ async function Detalhes({ params }: { params: Params }) {
               className="mt-5 text-sm motion-safe:animate-surgir sm:text-base"
               style={atraso(0.7)}
             />
+            <div className="mt-6">
+              <Suspense fallback={null}>
+                <BotoesMarcar filmeId={filme.id} />
+              </Suspense>
+            </div>
           </div>
         </div>
 
