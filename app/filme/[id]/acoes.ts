@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { proximaSituacao, type Situacao } from "@/lib/listas";
-import { gravarSituacao, situacaoDoFilme } from "@/lib/marcacoes";
+import { gravarSituacao, situacaoDoTitulo } from "@/lib/marcacoes";
 import { detalharFilme } from "@/lib/tmdb";
 import { usuarioAtual } from "@/lib/usuario";
 
@@ -19,7 +19,8 @@ export async function alternarMarcacao(filmeId: number, clicada: Situacao): Prom
   if (!(await usuarioAtual())) redirect(`/entrar?volta=/filme/${filmeId}`);
 
   try {
-    const atual = await situacaoDoFilme(filmeId);
+    // Nesta etapa só filmes têm página; a Etapa 2 (séries) acrescenta o tipo aqui.
+    const atual = await situacaoDoTitulo("filme", filmeId);
     // Título, pôster e nota vêm do TMDB, não do formulário: o servidor não confia no navegador.
     const filme = await detalharFilme(filmeId);
     await gravarSituacao(filme, proximaSituacao(atual, clicada));

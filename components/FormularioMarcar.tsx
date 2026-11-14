@@ -2,10 +2,9 @@
 
 import { useActionState } from "react";
 import { alternarMarcacao, type EstadoMarcar } from "@/app/filme/[id]/acoes";
-import { NOME_DA_SITUACAO, type Situacao } from "@/lib/listas";
+import { NOME_DA_SITUACAO, SITUACOES, type Situacao } from "@/lib/listas";
 import { classeFiltro } from "./classeFiltro";
 
-const SITUACOES: Situacao[] = ["quero_assistir", "ja_assisti"];
 const INICIAL: EstadoMarcar = { erro: null };
 
 function BotaoMarcar({ filmeId, situacao, acesa }: { filmeId: number; situacao: Situacao; acesa: boolean }) {

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { linhaParaFilme, type LinhaMarcacao, type Situacao } from "./listas";
+import { linhaParaFilme, type LinhaMarcacao, type Situacao, type Tipo } from "./listas";
 import { criarClienteServidor } from "./supabase/servidor";
 import type { FilmeResumo } from "./tmdb";
 import { usuarioAtual } from "./usuario";
@@ -16,25 +16,27 @@ async function cliente() {
 }
 
 /**
- * Em que lista este filme está para quem está logado (ou null).
+ * Em que lista este título está para quem está logado (ou null).
  * O filtro por pessoa vem da RLS: o banco só devolve as linhas de quem está logado.
+ * O tipo entra no filtro porque o filme 1399 e a série 1399 são títulos diferentes.
  */
-export async function situacaoDoFilme(filmeId: number): Promise<Situacao | null> {
+export async function situacaoDoTitulo(tipo: Tipo, id: number): Promise<Situacao | null> {
   if (!(await usuarioAtual())) return null;
   const { data, error } = await (await cliente())
     .from("marcacoes")
     .select("situacao")
-    .eq("filme_id", filmeId)
+    .eq("tipo", tipo)
+    .eq("filme_id", id)
     .maybeSingle();
   if (error) throw new MarcacoesIndisponiveisError(error.message);
   return (data?.situacao as Situacao | undefined) ?? null;
 }
 
-/** Os filmes de uma lista, do marcado mais recente para o mais antigo. */
+/** Os títulos (filmes e séries) de uma lista, do marcado mais recente para o mais antigo. */
 export async function listarMarcacoes(situacao: Situacao): Promise<FilmeResumo[]> {
   const { data, error } = await (await cliente())
     .from("marcacoes")
-    .select("filme_id, titulo, poster_url, ano, nota")
+    .select("tipo, filme_id, titulo, poster_url, ano, nota")
     .eq("situacao", situacao)
     .order("marcado_em", { ascending: false });
   if (error) throw new MarcacoesIndisponiveisError(error.message);
@@ -51,8 +53,9 @@ export const contarMarcacoes = cache(async (): Promise<Record<Situacao, number>>
 });
 
 /**
- * Grava a situação do filme para quem está logado.
+ * Grava a situação do título para quem está logado.
  * null apaga a marcação; uma situação cria a linha ou troca a lista dela.
+ * Apagar filtra pelo tipo também: desmarcar o filme 1399 não apaga a série 1399.
  */
 export async function gravarSituacao(filme: FilmeResumo, situacao: Situacao | null): Promise<void> {
   const usuario = await usuarioAtual();
@@ -61,10 +64,11 @@ export async function gravarSituacao(filme: FilmeResumo, situacao: Situacao | nu
 
   const { error } =
     situacao === null
-      ? await supabase.from("marcacoes").delete().eq("filme_id", filme.id)
+      ? await supabase.from("marcacoes").delete().eq("tipo", filme.tipo).eq("filme_id", filme.id)
       : await supabase.from("marcacoes").upsert(
           {
             user_id: usuario.id,
+            tipo: filme.tipo,
             filme_id: filme.id,
             situacao,
             titulo: filme.titulo,
@@ -73,7 +77,7 @@ export async function gravarSituacao(filme: FilmeResumo, situacao: Situacao | nu
             nota: filme.nota,
             marcado_em: new Date().toISOString(),
           },
-          { onConflict: "user_id,filme_id" },
+          { onConflict: "user_id,tipo,filme_id" },
         );
   if (error) throw new MarcacoesIndisponiveisError(error.message);
 }
