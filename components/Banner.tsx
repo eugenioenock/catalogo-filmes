@@ -26,7 +26,7 @@ export default function Banner({ filme }: { filme: FilmeResumo }) {
         </div>
       )}
 
-      <div className="mx-auto flex min-h-[82svh] max-w-7xl flex-col justify-end px-4 pt-36 pb-14 sm:min-h-[90svh] sm:px-8 sm:pb-24">
+      <div className="mx-auto flex min-h-[82svh] max-w-7xl flex-col justify-end px-4 pt-48 pb-14 sm:pt-44 sm:min-h-[90svh] sm:px-8 sm:pb-24">
         <div className="max-w-2xl [text-shadow:0_2px_24px_rgb(13_10_18/0.5)]">
           <p
             className="mb-3 text-sm font-medium text-tela/80 motion-safe:animate-surgir sm:text-base"

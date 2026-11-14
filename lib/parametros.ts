@@ -1,8 +1,12 @@
+import { LISTAS, type ListaUrl } from "./listas";
+
 export type FiltrosCatalogo = {
   streaming: number | null;
   busca: string | null;
   nota: number | null;
   pagina: number;
+  /** Lista pessoal aberta numa aba (null = Catálogo). */
+  lista: ListaUrl | null;
 };
 
 export const NOTAS_FILTRO = [6, 7, 8, 9] as const;
@@ -23,6 +27,10 @@ function notaDoFiltro(valor: string | undefined): number | null {
   return NOTAS_FILTRO.find((n) => String(n) === valor) ?? null;
 }
 
+function listaDoFiltro(valor: string | undefined): ListaUrl | null {
+  return LISTAS.find((l) => l === valor) ?? null;
+}
+
 export function lerFiltros(params: Record<string, string | string[] | undefined>): FiltrosCatalogo {
   const pagina = inteiroPositivo(primeiro(params.pagina)) ?? 1;
   const busca = primeiro(params.busca)?.trim().slice(0, 100) || null;
@@ -31,6 +39,7 @@ export function lerFiltros(params: Record<string, string | string[] | undefined>
     busca,
     nota: notaDoFiltro(primeiro(params.nota)),
     pagina: Math.min(pagina, MAX_PAGINAS),
+    lista: listaDoFiltro(primeiro(params.lista)),
   };
 }
 
@@ -51,4 +60,9 @@ export function montarHref(atual: FiltrosCatalogo, mudancas: Partial<FiltrosCata
   if (novo.pagina !== 1) query.set("pagina", String(novo.pagina));
   const texto = query.toString();
   return texto ? `/?${texto}` : "/";
+}
+
+/** Link de uma aba: Catálogo é a raiz; as listas pessoais vão em ?lista=. */
+export function hrefDaLista(lista: ListaUrl | null): string {
+  return lista === null ? "/" : `/?lista=${lista}`;
 }

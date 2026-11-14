@@ -6,6 +6,7 @@ import EmAlta from "@/components/EmAlta";
 import FiltroNota from "@/components/FiltroNota";
 import FiltroStreamings from "@/components/FiltroStreamings";
 import GradeFilmes from "@/components/GradeFilmes";
+import ListaPessoal from "@/components/ListaPessoal";
 import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
 import { mensagemSemFilmes } from "@/lib/formatar";
@@ -19,6 +20,19 @@ const TAMANHO_RANKING = 10;
 async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   const filtros = lerFiltros(await searchParams);
   const { streaming, busca, nota, pagina } = filtros;
+
+  // Aba pessoal: os filmes vêm do Supabase, sem chamar o TMDB.
+  if (filtros.lista !== null) {
+    return (
+      <div className="relative isolate">
+        <LuzAmbiente imagem={null} />
+        <Cabecalho busca={null} streaming={null} nomeComoTitulo listaAtiva={filtros.lista} />
+        <main className="mx-auto max-w-7xl px-4 pt-6 pb-20 sm:px-8">
+          <ListaPessoal lista={filtros.lista} />
+        </main>
+      </div>
+    );
+  }
 
   const [streamings, resultado] = await Promise.all([
     listarStreamings(),
@@ -47,7 +61,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="relative isolate">
       <LuzAmbiente imagem={vitrine ? filmes[0].backdropUrl : null} />
-      <Cabecalho busca={busca} streaming={streaming} nota={nota} nomeComoTitulo sobreposto={vitrine} />
+      <Cabecalho busca={busca} streaming={streaming} nota={nota} nomeComoTitulo sobreposto={vitrine} listaAtiva={null} />
       {vitrine && <Banner filme={filmes[0]} />}
 
       <main className={`relative space-y-14 pb-20 ${vitrine ? "-mt-6 sm:-mt-12" : "pt-6"}`}>

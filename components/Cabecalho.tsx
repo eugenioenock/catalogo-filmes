@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import type { ListaUrl } from "@/lib/listas";
+import AbasListas from "./AbasListas";
 import AreaConta from "./AreaConta";
 import CampoBusca from "./CampoBusca";
 
@@ -10,6 +12,8 @@ type Props = {
   nomeComoTitulo?: boolean;
   /** Fica por cima da foto do destaque, sem fundo próprio. */
   sobreposto?: boolean;
+  /** Aba ativa (null = Catálogo). Sem esta prop, o cabeçalho não mostra as abas. */
+  listaAtiva?: ListaUrl | null;
 };
 
 export default function Cabecalho({
@@ -18,6 +22,7 @@ export default function Cabecalho({
   nota = null,
   nomeComoTitulo = false,
   sobreposto = false,
+  listaAtiva,
 }: Props) {
   const Nome = nomeComoTitulo ? "h1" : "p";
   return (
@@ -44,6 +49,11 @@ export default function Cabecalho({
           </Suspense>
         </div>
       </div>
+      {listaAtiva !== undefined && (
+        <div className="mx-auto max-w-7xl px-4 sm:-mt-2 sm:px-8">
+          <AbasListas ativa={listaAtiva} />
+        </div>
+      )}
     </header>
   );
 }
