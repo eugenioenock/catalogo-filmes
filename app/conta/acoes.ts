@@ -7,6 +7,7 @@ import {
   validarCredenciais,
   validarNome,
   type EstadoConta,
+  type EstadoNome,
   type ModoConta,
 } from "@/lib/conta";
 import { criarClienteServidor } from "@/lib/supabase/servidor";
@@ -54,6 +55,32 @@ export async function entrar(_estado: EstadoConta, dados: FormData): Promise<Est
 
 export async function criarConta(_estado: EstadoConta, dados: FormData): Promise<EstadoConta> {
   return autenticar("criar", dados);
+}
+
+/** Tela Completar cadastro: grava (ou muda) o nome de quem está logado. */
+export async function salvarNome(_estado: EstadoNome, dados: FormData): Promise<EstadoNome> {
+  const nome = String(dados.get("nome") ?? "").trim();
+  const volta = lerVolta(dados.get("volta"));
+
+  const invalido = validarNome(nome);
+  if (invalido) return { erro: invalido, nome };
+
+  try {
+    const supabase = await criarClienteServidor();
+    if (!supabase) return { erro: traduzirErroAuth(undefined), nome };
+
+    const { error } = await supabase.auth.updateUser({ data: { nome } });
+    if (error) return { erro: traduzirErroAuth(undefined), nome };
+    // O token da sessão ainda tem os metadados antigos. Renovar já grava um token
+    // com o nome novo no cookie, e o cabeçalho mostra o nome sem precisar entrar de novo.
+    const renovada = await supabase.auth.refreshSession();
+    if (renovada.error) return { erro: traduzirErroAuth(undefined), nome };
+  } catch {
+    return { erro: traduzirErroAuth(undefined), nome };
+  }
+
+  // Fora do try: o redirect funciona lançando um erro especial do Next.
+  redirect(volta);
 }
 
 export async function sair(): Promise<void> {

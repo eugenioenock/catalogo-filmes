@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { lerVolta, type ModoConta } from "@/lib/conta";
 import Cabecalho from "./Cabecalho";
+import CartaoConta from "./CartaoConta";
 import FormularioConta from "./FormularioConta";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -34,13 +35,11 @@ export default function PaginaConta({
     <>
       <Cabecalho busca={null} streaming={null} />
       <main className="mx-auto w-full max-w-md px-4 pt-10 pb-24 sm:pt-16">
-        <div className="rounded-3xl bg-poltrona/70 p-6 ring-1 ring-tela/10 backdrop-blur-md sm:p-8">
-          <h1 className="font-display text-5xl leading-[0.85] font-black uppercase">{titulo}</h1>
-          <p className="mt-3 mb-7 text-nevoa">{subtitulo}</p>
+        <CartaoConta titulo={titulo} subtitulo={subtitulo}>
           <Suspense fallback={<div className="h-72" />}>
             <Formulario modo={modo} searchParams={searchParams} />
           </Suspense>
-        </div>
+        </CartaoConta>
       </main>
     </>
   );
