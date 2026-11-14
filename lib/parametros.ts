@@ -1,4 +1,11 @@
-export type FiltrosCatalogo = { streaming: number | null; busca: string | null; pagina: number };
+export type FiltrosCatalogo = {
+  streaming: number | null;
+  busca: string | null;
+  nota: number | null;
+  pagina: number;
+};
+
+export const NOTAS_FILTRO = [6, 7, 8, 9] as const;
 
 const MAX_PAGINAS = 500;
 
@@ -12,12 +19,17 @@ function inteiroPositivo(valor: string | undefined): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
+function notaDoFiltro(valor: string | undefined): number | null {
+  return NOTAS_FILTRO.find((n) => String(n) === valor) ?? null;
+}
+
 export function lerFiltros(params: Record<string, string | string[] | undefined>): FiltrosCatalogo {
   const pagina = inteiroPositivo(primeiro(params.pagina)) ?? 1;
   const busca = primeiro(params.busca)?.trim().slice(0, 100) || null;
   return {
     streaming: inteiroPositivo(primeiro(params.streaming)),
     busca,
+    nota: notaDoFiltro(primeiro(params.nota)),
     pagina: Math.min(pagina, MAX_PAGINAS),
   };
 }
@@ -28,12 +40,14 @@ export function lerIdFilme(valor: string): number | null {
 
 export function montarHref(atual: FiltrosCatalogo, mudancas: Partial<FiltrosCatalogo>): string {
   const novo: FiltrosCatalogo = { ...atual, ...mudancas };
-  if (("streaming" in mudancas || "busca" in mudancas) && !("pagina" in mudancas)) {
+  const mudouFiltro = "streaming" in mudancas || "busca" in mudancas || "nota" in mudancas;
+  if (mudouFiltro && !("pagina" in mudancas)) {
     novo.pagina = 1;
   }
   const query = new URLSearchParams();
   if (novo.streaming !== null) query.set("streaming", String(novo.streaming));
   if (novo.busca !== null) query.set("busca", novo.busca);
+  if (novo.nota !== null) query.set("nota", String(novo.nota));
   if (novo.pagina !== 1) query.set("pagina", String(novo.pagina));
   const texto = query.toString();
   return texto ? `/?${texto}` : "/";
