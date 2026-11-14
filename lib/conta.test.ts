@@ -1,0 +1,40 @@
+import { describe, expect, it } from "vitest";
+import { lerVolta, traduzirErroAuth, validarCredenciais } from "./conta";
+
+describe("lerVolta", () => {
+  it.each(["/", "/filme/27205", "/?lista=ja-assisti"])("aceita %s", (v) =>
+    expect(lerVolta(v)).toBe(v));
+  it.each(["//site.com", "https://site.com", "/\\site.com", "", "filme/1", null, undefined, 42])(
+    "troca %s por /",
+    (v) => expect(lerVolta(v)).toBe("/"),
+  );
+});
+
+describe("validarCredenciais", () => {
+  it("aceita e-mail e senha válidos", () =>
+    expect(validarCredenciais("a@b.com", "123456", "criar")).toBeNull());
+  it("e-mail sem @", () =>
+    expect(validarCredenciais("ab.com", "123456", "entrar")).toBe("Digite um e-mail válido."));
+  it("e-mail só com espaços", () =>
+    expect(validarCredenciais("   ", "123456", "entrar")).toBe("Digite um e-mail válido."));
+  it("senha vazia ao entrar", () =>
+    expect(validarCredenciais("a@b.com", "", "entrar")).toBe("Digite sua senha."));
+  it("senha curta ao criar", () =>
+    expect(validarCredenciais("a@b.com", "12345", "criar")).toBe(
+      "A senha precisa ter pelo menos 6 caracteres.",
+    ));
+  it("senha curta ao entrar não é barrada aqui", () =>
+    expect(validarCredenciais("a@b.com", "12345", "entrar")).toBeNull());
+});
+
+describe("traduzirErroAuth", () => {
+  it.each([
+    ["invalid_credentials", "E-mail ou senha incorretos."],
+    ["user_already_exists", "Este e-mail já está cadastrado. Entre com sua senha."],
+    ["email_exists", "Este e-mail já está cadastrado. Entre com sua senha."],
+    ["weak_password", "A senha precisa ter pelo menos 6 caracteres."],
+    ["email_address_invalid", "Digite um e-mail válido."],
+    ["over_request_rate_limit", "Não foi possível falar com o servidor agora. Tente de novo."],
+    [undefined, "Não foi possível falar com o servidor agora. Tente de novo."],
+  ])("%s", (codigo, msg) => expect(traduzirErroAuth(codigo)).toBe(msg));
+});

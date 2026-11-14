@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { configSupabase } from "./config";
 
 /**
@@ -15,6 +16,10 @@ export async function criarClienteServidor(): Promise<SupabaseClient | null> {
   if (!config) return null;
 
   const loja = await cookies();
+  // O Supabase compara a validade do token com Date.now(). Com cacheComponents/partialPrefetching,
+  // o Next pode pré-renderizar já com os cookies; connection() garante que daqui em diante
+  // só roda na requisição de verdade (senão: erro "blocking-prerender-current-time").
+  await connection();
   return createServerClient(config.url, config.chave, {
     cookies: {
       getAll() {
