@@ -18,13 +18,15 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/completar-
   if (!usuario) redirect(`/entrar?volta=${encodeURIComponent(linkCadastro(volta))}`);
 
   const nome = nomeValido(usuario.nome);
+  // A key recria o formulário quando o nome salvo muda: sem ela, o botão Voltar
+  // mostraria o estado guardado da visita anterior (campo vazio).
   return nome ? (
     <CartaoConta titulo="Seu cadastro" subtitulo="Mude como quer ser chamado.">
-      <FormularioNome nomeAtual={nome} volta={volta} />
+      <FormularioNome key={nome} nomeAtual={nome} volta={volta} />
     </CartaoConta>
   ) : (
     <CartaoConta titulo="Completar cadastro" subtitulo="Falta pouco! Como quer ser chamado?">
-      <FormularioNome nomeAtual={null} volta={volta} />
+      <FormularioNome key="sem-nome" nomeAtual={null} volta={volta} />
     </CartaoConta>
   );
 }
