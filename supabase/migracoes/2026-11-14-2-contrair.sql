@@ -1,0 +1,10 @@
+-- CineCatálogo, Etapa 1 (2ª de 2 vezes): CONTRAIR a tabela marcacoes.
+--
+-- ATENÇÃO: rodar só depois que a Etapa 1 estiver publicada em produção (Vercel).
+-- O código antigo grava com "on conflict (user_id, filme_id)" e precisa deste índice;
+-- o código novo grava com "on conflict (user_id, tipo, filme_id)", que usa a chave primária.
+--
+-- Depois disto, a mesma pessoa pode ter o filme 1399 e a série 1399 nas listas.
+-- Pode rodar de novo sem erro.
+
+drop index if exists public.marcacoes_filme_unico;

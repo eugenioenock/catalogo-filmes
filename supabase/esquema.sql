@@ -1,13 +1,22 @@
--- CineCatálogo: listas pessoais ("Quero assistir" e "Já assisti").
--- Cole este arquivo inteiro no SQL Editor do painel do Supabase e clique em "Run".
+-- CineCatálogo: listas pessoais ("Quero assistir", "Assistindo" e "Já assisti"),
+-- para filmes e séries.
+-- Este arquivo cria o banco DO ZERO, já no estado final. Cole-o inteiro no SQL Editor
+-- do painel do Supabase e clique em "Run".
+-- Um banco criado antes das séries é atualizado pelos arquivos de supabase/migracoes/.
 
--- 1) A tabela: uma linha por pessoa e filme.
---    A chave primária (user_id, filme_id) garante que cada filme fica em UMA lista só
---    por pessoa. Trocar de lista é atualizar a linha; desmarcar é apagar a linha.
+-- 1) A tabela: uma linha por pessoa e título (filme ou série).
+--    A chave primária (user_id, tipo, filme_id) garante que cada título fica em UMA
+--    lista só por pessoa. Trocar de lista é atualizar a linha; desmarcar é apagar a linha.
 create table if not exists public.marcacoes (
   user_id    uuid        not null references auth.users (id) on delete cascade,
-  filme_id   integer     not null,                -- id do filme no TMDB
-  situacao   text        not null check (situacao in ('quero_assistir', 'ja_assisti')),
+  tipo       text        not null default 'filme'
+             constraint marcacoes_tipo_check check (tipo in ('filme', 'serie')),
+  -- id do título no TMDB. O nome ficou de quando só havia filmes: guarda o id
+  -- de um filme OU de uma série (a coluna tipo diz qual).
+  filme_id   integer     not null,
+  situacao   text        not null
+             constraint marcacoes_situacao_check
+             check (situacao in ('quero_assistir', 'assistindo', 'ja_assisti')),
   -- Cópia dos dados do filme no momento da marcação, para a lista abrir
   -- com uma consulta só, sem chamar o TMDB para cada filme.
   titulo     text        not null,
@@ -15,7 +24,7 @@ create table if not exists public.marcacoes (
   ano        text,
   nota       numeric,
   marcado_em timestamptz not null default now(),  -- ordena a lista (mais recente primeiro)
-  primary key (user_id, filme_id)
+  constraint marcacoes_pkey primary key (user_id, tipo, filme_id)
 );
 
 -- 2) Row Level Security: o banco só deixa cada pessoa ver e mexer nas PRÓPRIAS linhas.
