@@ -10,7 +10,7 @@ export default function GradeFilmes({
 }) {
   if (filmes.length === 0) {
     return (
-      <p className="py-16 text-center text-neutral-400">
+      <p className="py-16 text-center text-nevoa">
         {haMaisPaginas
           ? "Nenhum resultado nesta página. Veja a próxima."
           : "Nenhum filme com esse nome está no streaming agora."}
@@ -18,7 +18,7 @@ export default function GradeFilmes({
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {filmes.map((filme) => (
         <CartaoFilme key={filme.id} filme={filme} />
       ))}

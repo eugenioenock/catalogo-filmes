@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+/* "A sala escura": paleta e tipos do CineCatálogo. */
+@theme {
+  --color-sala: #0d0a12; /* fundo: preto-ameixa da sala de cinema */
+  --color-poltrona: #1c1524; /* superfícies */
+  --color-poltrona-clara: #2b2135; /* superfícies em foco ou hover */
+  --color-projetor: #f5c451; /* destaque: nota, ação principal, foco */
+  --color-projetor-forte: #ffd36b;
+  --color-tela: #f4efe6; /* texto principal */
+  --color-nevoa: #a79fb2; /* texto secundário */
+
+  --animate-assentar: assentar 2.6s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+  --animate-surgir: surgir 0.9s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+
+  @keyframes assentar {
+    from {
+      transform: scale(1.1);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes surgir {
+    from {
+      transform: translateY(1.25rem);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+/* As fontes chegam como variáveis CSS do next/font (ver app/layout.tsx). */
+@theme inline {
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-big-shoulders), "Arial Narrow", sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background-color: var(--color-sala);
+  }
+
+  ::selection {
+    background-color: var(--color-projetor);
+    color: var(--color-sala);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-projetor);
+    outline-offset: 3px;
+  }
+}
+
+/* Número vazado do ranking "Em alta agora". */
+@utility numero-ranking {
+  color: var(--color-sala);
+  -webkit-text-stroke: 3px color-mix(in oklab, var(--color-tela) 55%, transparent);
+  paint-order: stroke fill;
+}
+
+@utility sem-barra-rolagem {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -5,7 +5,12 @@ type Props = {
 
 export default function CampoBusca({ busca, streaming }: Props) {
   return (
-    <form method="get" action="/" className="flex w-full gap-2 sm:w-auto">
+    <form
+      method="get"
+      action="/"
+      role="search"
+      className="group flex w-full items-center rounded-full border border-tela/15 bg-sala/50 pl-4 backdrop-blur-md transition-colors focus-within:border-projetor/70 focus-within:bg-sala/80 sm:w-80"
+    >
       <input
         type="search"
         maxLength={100}
@@ -13,16 +18,20 @@ export default function CampoBusca({ busca, streaming }: Props) {
         defaultValue={busca ?? ""}
         placeholder="Buscar filmes"
         aria-label="Buscar filmes"
-        className="min-w-0 flex-1 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder:text-neutral-500 focus:border-amber-500 focus:outline-none sm:w-72"
+        className="min-w-0 flex-1 bg-transparent py-2.5 text-tela placeholder:text-nevoa focus:outline-none"
       />
       {streaming !== null && (
         <input type="hidden" name="streaming" value={streaming} />
       )}
       <button
         type="submit"
-        className="rounded-md bg-amber-500 px-4 py-2 font-medium text-neutral-950 hover:bg-amber-400"
+        aria-label="Buscar"
+        className="m-1 grid size-9 shrink-0 place-items-center rounded-full text-nevoa transition-colors hover:bg-projetor hover:text-sala focus-visible:bg-projetor focus-visible:text-sala"
       >
-        Buscar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="size-[18px]" aria-hidden>
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m20 20-4.2-4.2" />
+        </svg>
       </button>
     </form>
   );

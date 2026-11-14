@@ -9,18 +9,28 @@ export default function Error({ error, retry }: { error: Error; retry: () => voi
   }, [error]);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-4 py-16">
-      <p className="text-lg">Não conseguimos carregar os filmes agora.</p>
-      <button
-        type="button"
-        onClick={() => retry()}
-        className="rounded-md bg-amber-500 px-4 py-2 font-medium text-neutral-950 hover:bg-amber-400"
-      >
-        Tentar de novo
-      </button>
-      <Link href="/" className="text-amber-500 hover:underline">
-        ← Voltar ao catálogo
-      </Link>
+    <main className="mx-auto flex max-w-7xl flex-col items-start gap-5 px-4 py-24 sm:px-8">
+      <h1 className="font-display text-5xl leading-[0.85] font-black uppercase sm:text-7xl">
+        A projeção parou
+      </h1>
+      <p className="max-w-[52ch] text-lg text-tela/85">
+        Não conseguimos carregar os filmes do TMDB agora. Tente de novo em alguns segundos.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => retry()}
+          className="rounded-full bg-projetor px-6 py-3 font-semibold text-sala transition-colors hover:bg-projetor-forte"
+        >
+          Tentar de novo
+        </button>
+        <Link
+          href="/"
+          className="rounded-full bg-poltrona px-6 py-3 font-semibold ring-1 ring-tela/10 transition-colors hover:bg-poltrona-clara"
+        >
+          Voltar ao catálogo
+        </Link>
+      </div>
     </main>
   );
 }
