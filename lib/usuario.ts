@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { criarClienteServidor } from "./supabase/servidor";
 
-/** `nome` vem dos metadados da conta sem tratar: quem decide se é válido é `saudacao`. */
+/** `nome` vem dos metadados da conta sem tratar: quem decide se é válido é `nomeValido` (lib/conta.ts). */
 export type Usuario = { id: string; email: string; nome: unknown };
 
 /**

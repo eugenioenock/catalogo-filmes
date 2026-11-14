@@ -48,16 +48,6 @@ export function validarNome(nome: string): string | null {
 }
 
 /**
- * Texto do cabeçalho para quem está logado. O nome vem dos metadados da conta,
- * então pode ser qualquer coisa (ou nada): sem um texto válido, usa o começo do e-mail.
- */
-export function saudacao(nome: unknown, email: string): string {
-  const doNome = typeof nome === "string" ? nome.trim() : "";
-  const quem = doNome || email.split("@")[0].trim();
-  return quem ? `Olá, ${quem}` : "Olá!";
-}
-
-/**
  * O nome guardado na conta, se houver um de verdade. Os metadados podem ter
  * qualquer coisa (ou nada): só texto com algo além de espaços conta como nome.
  */

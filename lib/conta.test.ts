@@ -4,7 +4,6 @@ import {
   lerVolta,
   linkCadastro,
   nomeValido,
-  saudacao,
   traduzirErroAuth,
   validarCredenciais,
   validarNome,
@@ -68,14 +67,6 @@ describe("validarNome", () => {
   it("recusa 41 caracteres", () =>
     expect(validarNome("a".repeat(41))).toBe("Use até 40 caracteres."));
   it("conta emoji como 1 caractere", () => expect(validarNome("🎬".repeat(40))).toBeNull());
-});
-
-describe("saudacao", () => {
-  it("usa o nome", () => expect(saudacao("Eugênio", "e@x.com")).toBe("Olá, Eugênio"));
-  it("tira espaços das pontas", () => expect(saudacao("  Ana  ", "a@x.com")).toBe("Olá, Ana"));
-  it.each([undefined, null, "", "   ", 42, { a: 1 }])("sem nome válido (%s) usa o e-mail", (n) =>
-    expect(saudacao(n, "eugenio@x.com")).toBe("Olá, eugenio"));
-  it("sem nome e sem e-mail", () => expect(saudacao(undefined, "")).toBe("Olá!"));
 });
 
 describe("nomeValido", () => {

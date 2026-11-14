@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import {
+  destinoAposLogin,
   lerVolta,
   traduzirErroAuth,
   validarCredenciais,
@@ -32,21 +33,24 @@ async function autenticar(modo: ModoConta, dados: FormData): Promise<EstadoConta
     (modo === "criar" ? validarNome(nome) : null) ?? validarCredenciais(email, senha, modo);
   if (invalido) return { erro: invalido, nome, email };
 
+  let destino = volta;
   try {
     const supabase = await criarClienteServidor();
     if (!supabase) return { erro: traduzirErroAuth(undefined), nome, email };
 
-    const { error } =
+    const { data, error } =
       modo === "entrar"
         ? await supabase.auth.signInWithPassword({ email, password: senha })
         : await supabase.auth.signUp({ email, password: senha, options: { data: { nome } } });
     if (error) return { erro: traduzirErroAuth(error.code), nome, email };
+    // Contas antigas não têm nome: ao entrar, passam antes pela tela Completar cadastro.
+    if (modo === "entrar") destino = destinoAposLogin(data.user?.user_metadata?.nome, volta);
   } catch {
     return { erro: traduzirErroAuth(undefined), nome, email };
   }
 
   // Fora do try: o redirect funciona lançando um erro especial do Next.
-  redirect(volta);
+  redirect(destino);
 }
 
 export async function entrar(_estado: EstadoConta, dados: FormData): Promise<EstadoConta> {
