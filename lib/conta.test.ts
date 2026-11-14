@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { lerVolta, saudacao, traduzirErroAuth, validarCredenciais, validarNome } from "./conta";
+import {
+  destinoAposLogin,
+  lerVolta,
+  linkCadastro,
+  nomeValido,
+  saudacao,
+  traduzirErroAuth,
+  validarCredenciais,
+  validarNome,
+} from "./conta";
 
 describe("lerVolta", () => {
   it.each(["/", "/filme/27205", "/?lista=ja-assisti"])("aceita %s", (v) =>
@@ -67,4 +76,29 @@ describe("saudacao", () => {
   it.each([undefined, null, "", "   ", 42, { a: 1 }])("sem nome válido (%s) usa o e-mail", (n) =>
     expect(saudacao(n, "eugenio@x.com")).toBe("Olá, eugenio"));
   it("sem nome e sem e-mail", () => expect(saudacao(undefined, "")).toBe("Olá!"));
+});
+
+describe("nomeValido", () => {
+  it("devolve o nome sem espaços nas pontas", () => expect(nomeValido("  Ana ")).toBe("Ana"));
+  it.each([undefined, null, "", "   ", 42, { a: 1 }])("sem nome válido (%s)", (n) =>
+    expect(nomeValido(n)).toBeNull());
+});
+
+describe("linkCadastro", () => {
+  it("da página inicial, sem volta", () => expect(linkCadastro("/")).toBe("/completar-cadastro"));
+  it("guarda a página atual", () =>
+    expect(linkCadastro("/filme/27205?x=1")).toBe(
+      "/completar-cadastro?volta=%2Ffilme%2F27205%3Fx%3D1",
+    ));
+  it("na própria tela, não aninha", () =>
+    expect(linkCadastro("/completar-cadastro?volta=%2Ffilme%2F1")).toBe("/completar-cadastro"));
+});
+
+describe("destinoAposLogin", () => {
+  it("com nome, vai para o volta", () =>
+    expect(destinoAposLogin("Ana", "/filme/1")).toBe("/filme/1"));
+  it("sem nome, passa pela tela e guarda o volta", () =>
+    expect(destinoAposLogin(undefined, "/filme/1")).toBe("/completar-cadastro?volta=%2Ffilme%2F1"));
+  it("sem nome, vindo do início", () =>
+    expect(destinoAposLogin("  ", "/")).toBe("/completar-cadastro"));
 });

@@ -2,6 +2,10 @@ export type ModoConta = "entrar" | "criar";
 
 export type EstadoConta = { erro: string | null; nome: string; email: string };
 
+export type EstadoNome = { erro: string | null; nome: string };
+
+const TELA_CADASTRO = "/completar-cadastro";
+
 const SENHA_MINIMA = 6;
 export const NOME_MAXIMO = 40;
 
@@ -51,6 +55,29 @@ export function saudacao(nome: unknown, email: string): string {
   const doNome = typeof nome === "string" ? nome.trim() : "";
   const quem = doNome || email.split("@")[0].trim();
   return quem ? `Olá, ${quem}` : "Olá!";
+}
+
+/**
+ * O nome guardado na conta, se houver um de verdade. Os metadados podem ter
+ * qualquer coisa (ou nada): só texto com algo além de espaços conta como nome.
+ */
+export function nomeValido(nome: unknown): string | null {
+  if (typeof nome !== "string") return null;
+  return nome.trim() || null;
+}
+
+/**
+ * Link para a tela Completar cadastro que lembra a página atual, para voltar a ela depois.
+ * Na própria tela (ou na inicial), não repete o volta.
+ */
+export function linkCadastro(atual: string): string {
+  if (atual === "/" || atual.startsWith(TELA_CADASTRO)) return TELA_CADASTRO;
+  return `${TELA_CADASTRO}?volta=${encodeURIComponent(atual)}`;
+}
+
+/** Para onde ir depois de entrar: quem ainda não tem nome passa antes pela tela Completar cadastro. */
+export function destinoAposLogin(nome: unknown, volta: string): string {
+  return nomeValido(nome) ? volta : linkCadastro(volta);
 }
 
 const MENSAGENS_AUTH: Record<string, string> = {
