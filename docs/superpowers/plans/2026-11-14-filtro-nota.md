@@ -30,7 +30,7 @@
 
 ---
 
-### Tarefa 1: `nota` nos filtros da URL
+### Task 1: `nota` nos filtros da URL
 
 **Files:**
 - Modify: `lib/parametros.ts`
@@ -88,7 +88,7 @@ git commit -m "feat: filtro de nota nos parâmetros da URL"
 
 ---
 
-### Tarefa 2: nota nas consultas ao TMDB
+### Task 2: nota nas consultas ao TMDB
 
 **Files:**
 - Modify: `lib/tmdb.ts`
@@ -167,7 +167,7 @@ git commit -m "feat: filtrar filmes por nota mínima no TMDB"
 
 ---
 
-### Tarefa 3: fileira de botões de nota na página inicial
+### Task 3: fileira de botões de nota na página inicial
 
 **Files:**
 - Create: `components/FiltroNota.tsx`
