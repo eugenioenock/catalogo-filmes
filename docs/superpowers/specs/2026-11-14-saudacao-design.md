@@ -13,8 +13,8 @@ No celular, quem está logado vê só o botão **Sair**: o e-mail fica escondido
 
 ## Fora do escopo
 
-- Página para editar o nome ou o perfil.
-- Pedir o nome no "Entrar".
+- Outros dados de perfil além do nome.
+- Bloquear todas as páginas para quem não tem nome (via `proxy.ts`).
 
 ## Abordagens consideradas
 
@@ -40,9 +40,45 @@ computador:  CINECATÁLOGO      [ busca ]   Olá, Eugênio  [Sair]
 ```
 
 - Nomes longos são cortados com "…". O e-mail aparece ao passar o mouse.
-- **Plano B:** sem nome nos metadados (contas antigas), usa a parte do e-mail antes do @.
+- A saudação é um link para `/completar-cadastro`, onde a pessoa pode mudar o nome.
+- **Sem nome** (contas criadas antes desta mudança): no lugar da saudação, um link em destaque (dourado) para `/completar-cadastro`. O texto é **"Complete seu cadastro"** a partir de `sm`, e **"Completar"** no celular, para caber na linha em 375px. Isso substitui o plano B anterior (a parte do e-mail antes do @).
 
-**Sua conta atual:** depois do deploy, eu gravo o seu nome direto nos metadados pelo Supabase. O nome passa a aparecer no próximo login (ou em até 1 hora, quando o token é renovado).
+## Completar cadastro (adendo de 2026-11-14)
+
+Contas antigas não têm nome, e o usuário quer que essas pessoas **tenham** que cadastrá-lo. Hoje só existe 1 conta real nessa situação (a dele), mas a tela também passa a servir para qualquer pessoa mudar o nome.
+
+**Abordagens consideradas** (o usuário escolheu a 1):
+1. **Ao entrar, mais o link no cabeçalho.** Se a conta não tem nome, o login leva para a tela. Quem já estava logado vê o link "Complete seu cadastro". Simples, e reaproveita o `volta` do login.
+2. **Bloqueio no `proxy.ts`, em todas as páginas.** Mais rígido, mas contraria o desenho do `proxy` ("não bloqueia nenhuma página") e corre risco de loop e de quebrar as ações de marcar. É exagero para uma conta.
+3. **Só o link.** Não obriga ninguém, o que contraria o "tem que cadastrar".
+
+**Tela `/completar-cadastro`** (mesmo visual de `/entrar`):
+
+```
+┌ COMPLETAR CADASTRO ──────────────────┐
+│ Falta pouco! Como quer ser chamado?  │
+│ [                                 ]  │
+│ [ Salvar e continuar ]               │
+└──────────────────────────────────────┘
+```
+
+- **Sem nome:** título "Completar cadastro", texto "Falta pouco! Como quer ser chamado?" e botão "Salvar e continuar".
+- **Com nome:** título "Seu cadastro", texto "Mude como quer ser chamado." e botão "Salvar". O campo já vem preenchido.
+- Mesmo campo e mesmas regras do cadastro (`validarNome`: obrigatório, sem espaços nas pontas, até 40 caracteres).
+- **Sem login:** vai para `/entrar?volta=/completar-cadastro`.
+- **Ao salvar:**
+  1. grava com `auth.updateUser({ data: { nome } })`;
+  2. renova a sessão (`refreshSession`), para o cabeçalho mostrar o nome novo na hora;
+  3. volta para o `volta` (validado por `lerVolta`), ou para `/`.
+- **Erro do servidor:** mensagem genérica, e o nome digitado continua no campo.
+
+**Login (`entrar`):** se a conta não tem nome válido (vazio, só espaços ou não é texto), vai para `/completar-cadastro?volta=<volta>` em vez de ir direto para o `volta`. O cadastro (`criar`) não muda, porque já exige o nome.
+
+**Links do cabeçalho** ("Olá, {nome}" e "Completar"): levam a `/completar-cadastro?volta=<página atual>`, como o "Entrar" já faz. Na própria `/completar-cadastro`, não repetem a página atual no `volta`.
+
+**Sua conta atual:** você mesmo completa o cadastro no próximo login. Isso serve também de teste real.
+
+**Testes:** uma função pura, `nomeValido(nome: unknown): string | null`, decide se o nome existe e é válido. Ela tem testes e é usada pela saudação, pelo login e pelo cabeçalho. A tela, o login e o cabeçalho são verificados no navegador em 375px e 1440px.
 
 ## Testes
 
