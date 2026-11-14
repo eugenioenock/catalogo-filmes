@@ -3,7 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { criarClienteServidor } from "./supabase/servidor";
 
-export type Usuario = { id: string; email: string };
+/** `nome` vem dos metadados da conta sem tratar: quem decide se é válido é `saudacao`. */
+export type Usuario = { id: string; email: string; nome: unknown };
 
 /**
  * Quem está logado nesta requisição, ou null.
@@ -16,7 +17,11 @@ export const usuarioAtual = cache(async (): Promise<Usuario | null> => {
     if (!supabase) return null;
     const { data, error } = await supabase.auth.getClaims();
     if (error || !data?.claims.sub) return null;
-    return { id: data.claims.sub, email: String(data.claims.email ?? "") };
+    return {
+      id: data.claims.sub,
+      email: String(data.claims.email ?? ""),
+      nome: data.claims.user_metadata?.nome,
+    };
   } catch {
     return null;
   }
