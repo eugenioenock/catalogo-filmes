@@ -12,11 +12,18 @@ const ERRO_JA_CADASTRADO = "Este e-mail já está cadastrado. Entre com sua senh
 /**
  * Para onde voltar depois de entrar. Só aceita caminhos deste site
  * ("/algo"), nunca "//outro-site" ou "https://…", que levariam para fora.
+ * O endereço passa pelo mesmo leitor de URL do navegador: ele apaga tabs e quebras
+ * de linha e troca "\" por "/", então "/\t/outro-site" também vira "//outro-site".
  */
 export function lerVolta(valor: unknown): string {
-  if (typeof valor !== "string") return "/";
-  if (!valor.startsWith("/") || valor.startsWith("//") || valor.startsWith("/\\")) return "/";
-  return valor;
+  if (typeof valor !== "string" || !valor.startsWith("/")) return "/";
+  const base = "http://cinecatalogo.invalid";
+  try {
+    const url = new URL(valor, base);
+    return url.origin === base ? url.pathname + url.search + url.hash : "/";
+  } catch {
+    return "/";
+  }
 }
 
 /** Confere o formulário antes de chamar o Supabase. Devolve a mensagem de erro ou null. */

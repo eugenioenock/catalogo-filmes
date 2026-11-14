@@ -4,7 +4,20 @@ import { lerVolta, traduzirErroAuth, validarCredenciais } from "./conta";
 describe("lerVolta", () => {
   it.each(["/", "/filme/27205", "/?lista=ja-assisti"])("aceita %s", (v) =>
     expect(lerVolta(v)).toBe(v));
-  it.each(["//site.com", "https://site.com", "/\\site.com", "", "filme/1", null, undefined, 42])(
+  it.each([
+    "//site.com",
+    "https://site.com",
+    "/\\site.com",
+    "/\t/site.com",
+    "/\n/site.com",
+    "/\r\n/site.com",
+    "/\t\\site.com",
+    "",
+    "filme/1",
+    null,
+    undefined,
+    42,
+  ])(
     "troca %s por /",
     (v) => expect(lerVolta(v)).toBe("/"),
   );
