@@ -16,13 +16,13 @@ const TAMANHO_RANKING = 10;
 
 async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   const filtros = lerFiltros(await searchParams);
-  const { streaming, busca, pagina } = filtros;
+  const { streaming, busca, nota, pagina } = filtros;
 
   const [streamings, resultado] = await Promise.all([
     listarStreamings(),
     busca
-      ? buscarFilmes({ texto: busca, streaming, pagina })
-      : listarFilmes({ streaming, pagina }),
+      ? buscarFilmes({ texto: busca, streaming, nota, pagina })
+      : listarFilmes({ streaming, nota, pagina }),
   ]);
   const { filmes, totalPaginas } = resultado;
 

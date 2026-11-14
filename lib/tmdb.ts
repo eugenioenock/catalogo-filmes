@@ -102,11 +102,14 @@ type TmdbFilme = {
   backdrop_path: string | null;
   overview?: string | null;
   vote_average: number;
+  vote_count: number;
 };
 type TmdbPagina = { page: number; total_pages: number; results: (TmdbFilme & { genre_ids: number[] })[] };
 type TmdbProvidersBR = { results?: { BR?: { flatrate?: TmdbProvider[] } } };
 
 const MAX_PAGINAS = 500;
+// Com o filtro de nota ativo, evita filmes com nota alta dada por poucas pessoas.
+const VOTOS_MINIMOS = 200;
 
 function resumir(f: TmdbFilme, generos: string[]): FilmeResumo {
   return {
@@ -149,6 +152,7 @@ async function montarPagina(dados: TmdbPagina): Promise<PaginaDeFilmes> {
 
 export async function listarFilmes(o: {
   streaming: number | null;
+  nota: number | null;
   pagina: number;
 }): Promise<PaginaDeFilmes> {
   const params: Record<string, string> = {
@@ -159,12 +163,17 @@ export async function listarFilmes(o: {
     page: String(o.pagina),
   };
   if (o.streaming !== null) params.with_watch_providers = String(o.streaming);
+  if (o.nota !== null) {
+    params["vote_average.gte"] = String(o.nota);
+    params["vote_count.gte"] = String(VOTOS_MINIMOS);
+  }
   return montarPagina(await tmdbGet<TmdbPagina>("/discover/movie", params));
 }
 
 export async function buscarFilmes(o: {
   texto: string;
   streaming: number | null;
+  nota: number | null;
   pagina: number;
 }): Promise<PaginaDeFilmes> {
   const dados = await tmdbGet<TmdbPagina>("/search/movie", {
@@ -172,10 +181,15 @@ export async function buscarFilmes(o: {
     language: "pt-BR",
     page: String(o.pagina),
   });
+  const { nota } = o;
+  const candidatos =
+    nota === null
+      ? dados.results
+      : dados.results.filter((f) => f.vote_average >= nota && f.vote_count >= VOTOS_MINIMOS);
   const disponibilidade = await Promise.allSettled(
-    dados.results.map((f) => tmdbGet<TmdbProvidersBR>(`/movie/${f.id}/watch/providers`)),
+    candidatos.map((f) => tmdbGet<TmdbProvidersBR>(`/movie/${f.id}/watch/providers`)),
   );
-  const results = dados.results.filter((_, i) => {
+  const results = candidatos.filter((_, i) => {
     const d = disponibilidade[i];
     if (d.status === "rejected") return false;
     const streamings = streamingsDe(d.value);

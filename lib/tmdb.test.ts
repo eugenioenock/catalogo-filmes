@@ -45,6 +45,7 @@ function filme(id: number, extra: Record<string, unknown> = {}) {
     backdrop_path: `/b${id}.jpg`,
     overview: `Sinopse ${id}`,
     vote_average: 7.5,
+    vote_count: 500,
     genre_ids: [28],
     ...extra,
   };
@@ -154,7 +155,7 @@ describe("tmdb", () => {
       "/genre/movie/list": generos,
       "/discover/movie": { page: 2, total_pages: 3, results: [filme(1)] },
     });
-    const r = await listarFilmes({ streaming: null, pagina: 2 });
+    const r = await listarFilmes({ streaming: null, nota: null, pagina: 2 });
     const url = new URL(urlChamada("/discover/movie"));
     expect(Object.fromEntries(url.searchParams)).toMatchObject({
       watch_region: "BR",
@@ -178,22 +179,37 @@ describe("tmdb", () => {
       "/genre/movie/list": generos,
       "/discover/movie": { page: 1, total_pages: 1, results: [filme(1, { genre_ids: [28, 999] })] },
     });
-    expect((await listarFilmes({ streaming: null, pagina: 1 })).filmes[0].generos).toEqual(["Ação"]);
+    expect((await listarFilmes({ streaming: null, nota: null, pagina: 1 })).filmes[0].generos).toEqual(["Ação"]);
   });
   it("listarFilmes com streaming envia with_watch_providers", async () => {
     rotear({
       "/genre/movie/list": generos,
       "/discover/movie": { page: 1, total_pages: 1, results: [] },
     });
-    await listarFilmes({ streaming: 8, pagina: 1 });
+    await listarFilmes({ streaming: 8, nota: null, pagina: 1 });
     expect(new URL(urlChamada("/discover/movie")).searchParams.get("with_watch_providers")).toBe("8");
+  });
+  it("listarFilmes sem nota não envia vote_average.gte nem vote_count.gte", async () => {
+    rotear({ "/genre/movie/list": generos, "/discover/movie": { page: 1, total_pages: 1, results: [] } });
+    await listarFilmes({ streaming: null, nota: null, pagina: 1 });
+    const p = new URL(urlChamada("/discover/movie")).searchParams;
+    expect(p.has("vote_average.gte")).toBe(false);
+    expect(p.has("vote_count.gte")).toBe(false);
+  });
+  it("listarFilmes com nota 8 envia vote_average.gte=8 e vote_count.gte=200", async () => {
+    rotear({ "/genre/movie/list": generos, "/discover/movie": { page: 1, total_pages: 1, results: [] } });
+    await listarFilmes({ streaming: 8, nota: 8, pagina: 1 });
+    const p = new URL(urlChamada("/discover/movie")).searchParams;
+    expect(p.get("vote_average.gte")).toBe("8");
+    expect(p.get("vote_count.gte")).toBe("200");
+    expect(p.get("with_watch_providers")).toBe("8");
   });
   it("totalPaginas é limitado a 500", async () => {
     rotear({
       "/genre/movie/list": generos,
       "/discover/movie": { page: 1, total_pages: 38000, results: [filme(1)] },
     });
-    expect((await listarFilmes({ streaming: null, pagina: 1 })).totalPaginas).toBe(500);
+    expect((await listarFilmes({ streaming: null, nota: null, pagina: 1 })).totalPaginas).toBe(500);
   });
   it("filme sem pôster, backdrop, sinopse e data vira null/vazio", async () => {
     rotear({
@@ -204,7 +220,7 @@ describe("tmdb", () => {
         results: [filme(1, { poster_path: null, backdrop_path: null, overview: "", release_date: "" })],
       },
     });
-    expect((await listarFilmes({ streaming: null, pagina: 1 })).filmes[0]).toMatchObject({
+    expect((await listarFilmes({ streaming: null, nota: null, pagina: 1 })).filmes[0]).toMatchObject({
       posterUrl: null,
       backdropUrl: null,
       sinopse: "",
@@ -225,15 +241,37 @@ describe("tmdb", () => {
 
     it("codifica o texto e mantém só quem tem flatrate no BR", async () => {
       rotasDeBusca({ rent: [provider(2)] });
-      const r = await buscarFilmes({ texto: "Tom & Jerry", streaming: null, pagina: 1 });
+      const r = await buscarFilmes({ texto: "Tom & Jerry", streaming: null, nota: null, pagina: 1 });
       expect(urlChamada("/search/movie")).toContain("query=Tom+%26+Jerry");
       expect(new URL(urlChamada("/search/movie")).searchParams.get("query")).toBe("Tom & Jerry");
       expect(r.filmes.map((f) => f.id)).toEqual([1]);
     });
     it("com streaming mantém só quem está naquele serviço", async () => {
       rotasDeBusca({ flatrate: [provider(337)] });
-      const r = await buscarFilmes({ texto: "x", streaming: 337, pagina: 1 });
+      const r = await buscarFilmes({ texto: "x", streaming: 337, nota: null, pagina: 1 });
       expect(r.filmes.map((f) => f.id)).toEqual([2]);
+    });
+    it("com nota mantém nota >= 8 com pelo menos 200 votos e não consulta os demais", async () => {
+      rotear({
+        "/genre/movie/list": generos,
+        "/search/movie": {
+          page: 1,
+          total_pages: 1,
+          results: [
+            filme(1, { vote_average: 8.0, vote_count: 200 }),
+            filme(2, { vote_average: 7.9, vote_count: 5000 }),
+            filme(3, { vote_average: 9.5, vote_count: 12 }),
+          ],
+        },
+        "/watch/providers": { results: { BR: { flatrate: [provider(8)] } } },
+      });
+      const r = await buscarFilmes({ texto: "x", streaming: null, nota: 8, pagina: 1 });
+      expect(r.filmes.map((f) => f.id)).toEqual([1]);
+      const consultados = fetchMock.mock.calls
+        .map(([u]) => String(u))
+        .filter((u) => u.includes("/watch/providers"));
+      expect(consultados).toHaveLength(1);
+      expect(consultados[0]).toContain("/movie/1/watch/providers");
     });
     it("uma consulta de disponibilidade que falha não derruba a busca", async () => {
       rotear({
@@ -243,7 +281,7 @@ describe("tmdb", () => {
         "/movie/2/watch/providers": responder({}, 500),
         "/movie/3/watch/providers": { results: { BR: { flatrate: [provider(9)] } } },
       });
-      const r = await buscarFilmes({ texto: "x", streaming: null, pagina: 1 });
+      const r = await buscarFilmes({ texto: "x", streaming: null, nota: null, pagina: 1 });
       expect(r.filmes.map((f) => f.id)).toEqual([1, 3]);
     });
   });
