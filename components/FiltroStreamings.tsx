@@ -2,18 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { montarHref, type FiltrosCatalogo } from "@/lib/parametros";
 import type { Streaming } from "@/lib/tmdb";
+import { classeFiltro } from "./classeFiltro";
 
 type Props = { streamings: Streaming[]; filtros: FiltrosCatalogo };
-
-function classe(ativa: boolean, comLogo: boolean): string {
-  return `flex shrink-0 items-center gap-2.5 rounded-full py-1.5 text-sm font-medium whitespace-nowrap ring-1 backdrop-blur-md transition-colors ${
-    comLogo ? "pr-4 pl-1.5" : "px-5"
-  } ${
-    ativa
-      ? "bg-projetor text-sala ring-projetor"
-      : "bg-poltrona/70 text-tela/90 ring-tela/10 hover:bg-poltrona-clara hover:ring-tela/30"
-  }`;
-}
 
 export default function FiltroStreamings({ streamings, filtros }: Props) {
   return (
@@ -24,7 +15,7 @@ export default function FiltroStreamings({ streamings, filtros }: Props) {
       <Link
         href={montarHref(filtros, { streaming: null })}
         aria-current={filtros.streaming === null ? "page" : undefined}
-        className={classe(filtros.streaming === null, false)}
+        className={classeFiltro(filtros.streaming === null, false)}
       >
         Todos
       </Link>
@@ -33,7 +24,7 @@ export default function FiltroStreamings({ streamings, filtros }: Props) {
           key={s.id}
           href={montarHref(filtros, { streaming: s.id })}
           aria-current={filtros.streaming === s.id ? "page" : undefined}
-          className={classe(filtros.streaming === s.id, true)}
+          className={classeFiltro(filtros.streaming === s.id, true)}
         >
           <Image src={s.logoUrl} alt="" width={28} height={28} className="size-7 rounded-full" />
           {s.nome}

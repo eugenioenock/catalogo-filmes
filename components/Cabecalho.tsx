@@ -4,6 +4,7 @@ import CampoBusca from "./CampoBusca";
 type Props = {
   busca: string | null;
   streaming: number | null;
+  nota?: number | null;
   nomeComoTitulo?: boolean;
   /** Fica por cima da foto do destaque, sem fundo próprio. */
   sobreposto?: boolean;
@@ -12,6 +13,7 @@ type Props = {
 export default function Cabecalho({
   busca,
   streaming,
+  nota = null,
   nomeComoTitulo = false,
   sobreposto = false,
 }: Props) {
@@ -30,7 +32,7 @@ export default function Cabecalho({
             CineCatálogo
           </Link>
         </Nome>
-        <CampoBusca busca={busca} streaming={streaming} />
+        <CampoBusca busca={busca} streaming={streaming} nota={nota} />
       </div>
     </header>
   );

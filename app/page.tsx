@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Banner from "@/components/Banner";
 import Cabecalho from "@/components/Cabecalho";
 import EmAlta from "@/components/EmAlta";
+import FiltroNota from "@/components/FiltroNota";
 import FiltroStreamings from "@/components/FiltroStreamings";
 import GradeFilmes from "@/components/GradeFilmes";
 import LuzAmbiente from "@/components/LuzAmbiente";
@@ -45,12 +46,13 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="relative isolate">
       <LuzAmbiente imagem={vitrine ? filmes[0].backdropUrl : null} />
-      <Cabecalho busca={busca} streaming={streaming} nomeComoTitulo sobreposto={vitrine} />
+      <Cabecalho busca={busca} streaming={streaming} nota={nota} nomeComoTitulo sobreposto={vitrine} />
       {vitrine && <Banner filme={filmes[0]} />}
 
       <main className={`relative space-y-14 pb-20 ${vitrine ? "-mt-6 sm:-mt-12" : "pt-6"}`}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+        <div className="mx-auto max-w-7xl space-y-3 px-4 sm:px-8">
           <FiltroStreamings streamings={streamings} filtros={filtros} />
+          <FiltroNota filtros={filtros} />
         </div>
 
         {ranking.length > 0 && <EmAlta filmes={ranking} />}
@@ -63,7 +65,11 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
             >
               {tituloGrade}
             </h2>
-            <GradeFilmes filmes={grade} haMaisPaginas={pagina < totalPaginas} />
+            <GradeFilmes
+              filmes={grade}
+              haMaisPaginas={pagina < totalPaginas}
+              comBusca={busca !== null}
+            />
           </section>
         )}
 

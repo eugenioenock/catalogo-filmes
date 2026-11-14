@@ -1,9 +1,10 @@
 type Props = {
   busca: string | null;
   streaming: number | null;
+  nota: number | null;
 };
 
-export default function CampoBusca({ busca, streaming }: Props) {
+export default function CampoBusca({ busca, streaming, nota }: Props) {
   return (
     <form
       method="get"
@@ -23,6 +24,7 @@ export default function CampoBusca({ busca, streaming }: Props) {
       {streaming !== null && (
         <input type="hidden" name="streaming" value={streaming} />
       )}
+      {nota !== null && <input type="hidden" name="nota" value={nota} />}
       <button
         type="submit"
         aria-label="Buscar"
