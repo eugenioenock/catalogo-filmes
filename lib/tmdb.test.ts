@@ -167,6 +167,7 @@ describe("tmdb", () => {
     expect(url.searchParams.has("with_watch_providers")).toBe(false);
     expect(r).toMatchObject({ pagina: 2, totalPaginas: 3 });
     expect(r.filmes[0]).toMatchObject({
+      tipo: "filme",
       id: 1,
       ano: "2024",
       generos: ["Ação"],
@@ -301,6 +302,7 @@ describe("tmdb", () => {
     );
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/genre/movie/list"))).toBe(false);
     expect(d).toMatchObject({
+      tipo: "filme",
       id: 10,
       titulo: "T",
       duracaoMin: 135,

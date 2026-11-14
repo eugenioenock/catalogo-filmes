@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { anoDe } from "./formatar";
+import type { Tipo } from "./listas";
 
 const API = "https://api.themoviedb.org/3";
 const IMAGENS = "https://image.tmdb.org/t/p";
@@ -82,6 +83,7 @@ export async function listarStreamings(): Promise<Streaming[]> {
 }
 
 export type FilmeResumo = {
+  tipo: Tipo;
   id: number;
   titulo: string;
   ano: string | null;
@@ -113,6 +115,7 @@ const VOTOS_MINIMOS = 200;
 
 function resumir(f: TmdbFilme, generos: string[]): FilmeResumo {
   return {
+    tipo: "filme",
     id: f.id,
     titulo: f.title,
     ano: anoDe(f.release_date),

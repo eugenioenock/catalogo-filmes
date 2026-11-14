@@ -22,8 +22,8 @@ describe("lerFiltros", () => {
     expect(lerFiltros({ nota: n }).nota).toBeNull());
   it("nota repetida usa o primeiro valor", () =>
     expect(lerFiltros({ nota: ["7", "9"] }).nota).toBe(7));
-  it.each(["quero-assistir", "ja-assisti"])("lê lista %s", (l) => expect(lerFiltros({ lista: l }).lista).toBe(l));
-  it.each(["abc", "", "quero_assistir", "QUERO-ASSISTIR"])("lista inválida %s vira null", (l) =>
+  it.each(["quero-assistir", "assistindo", "ja-assisti"])("lê lista %s", (l) => expect(lerFiltros({ lista: l }).lista).toBe(l));
+  it.each(["abc", "", "quero_assistir", "QUERO-ASSISTIR", "Assistindo", "assistindo ", "estou-assistindo"])("lista inválida %s vira null", (l) =>
     expect(lerFiltros({ lista: l }).lista).toBeNull());
   it("lista repetida usa o primeiro valor", () =>
     expect(lerFiltros({ lista: ["ja-assisti", "quero-assistir"] }).lista).toBe("ja-assisti"));
@@ -32,6 +32,7 @@ describe("lerFiltros", () => {
 describe("hrefDaLista", () => {
   it("Catálogo é a raiz", () => expect(hrefDaLista(null)).toBe("/"));
   it("lista pessoal vai na URL", () => expect(hrefDaLista("ja-assisti")).toBe("/?lista=ja-assisti"));
+  it("lista Assistindo vai na URL", () => expect(hrefDaLista("assistindo")).toBe("/?lista=assistindo"));
 });
 
 describe("lerIdFilme", () => {

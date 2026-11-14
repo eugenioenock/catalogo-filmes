@@ -45,7 +45,7 @@ export async function listarMarcacoes(situacao: Situacao): Promise<FilmeResumo[]
 export const contarMarcacoes = cache(async (): Promise<Record<Situacao, number>> => {
   const { data, error } = await (await cliente()).from("marcacoes").select("situacao");
   if (error) throw new MarcacoesIndisponiveisError(error.message);
-  const contagem: Record<Situacao, number> = { quero_assistir: 0, ja_assisti: 0 };
+  const contagem: Record<Situacao, number> = { quero_assistir: 0, assistindo: 0, ja_assisti: 0 };
   for (const { situacao } of data as { situacao: Situacao }[]) contagem[situacao]++;
   return contagem;
 });
