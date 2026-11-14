@@ -4,20 +4,19 @@ import CartaoFilme from "./CartaoFilme";
 export default function GradeFilmes({
   filmes,
   haMaisPaginas,
-  comBusca,
+  mensagemVazia,
 }: {
   filmes: FilmeResumo[];
   haMaisPaginas: boolean;
-  comBusca: boolean;
+  /** Usada quando não há filmes nem mais páginas. */
+  mensagemVazia: string;
 }) {
   if (filmes.length === 0) {
     return (
       <p className="py-16 text-center text-nevoa">
         {haMaisPaginas
           ? "Nenhum resultado nesta página. Veja a próxima."
-          : comBusca
-            ? "Nenhum filme com esse nome está no streaming agora."
-            : "Nenhum filme com essa nota neste streaming."}
+          : mensagemVazia}
       </p>
     );
   }

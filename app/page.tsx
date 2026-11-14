@@ -8,6 +8,7 @@ import FiltroStreamings from "@/components/FiltroStreamings";
 import GradeFilmes from "@/components/GradeFilmes";
 import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
+import { mensagemSemFilmes } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
 import { buscarFilmes, listarFilmes, listarStreamings } from "@/lib/tmdb";
 
@@ -68,7 +69,11 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
             <GradeFilmes
               filmes={grade}
               haMaisPaginas={pagina < totalPaginas}
-              comBusca={busca !== null}
+              mensagemVazia={mensagemSemFilmes({
+                busca: busca !== null,
+                nota: nota !== null,
+                streaming: streaming !== null,
+              })}
             />
           </section>
         )}
