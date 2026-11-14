@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { chaveDoTitulo, hrefDoTitulo } from "@/lib/listas";
 import type { FilmeResumo } from "@/lib/tmdb";
 import Fileira from "./Fileira";
 
@@ -10,9 +11,9 @@ export default function EmAlta({ filmes }: { filmes: FilmeResumo[] }) {
     <Fileira id="em-alta" titulo="Em alta agora">
       <ol className="flex w-max gap-3 px-(--margem) pt-5 pb-6 sm:gap-5">
         {filmes.map((filme, i) => (
-          <li key={filme.id} className="shrink-0 snap-start">
+          <li key={chaveDoTitulo(filme)} className="shrink-0 snap-start">
             <Link
-              href={`/filme/${filme.id}`}
+              href={hrefDoTitulo(filme)}
               aria-label={`${i + 1}º lugar: ${filme.titulo}`}
               className="group flex items-end rounded-md"
             >

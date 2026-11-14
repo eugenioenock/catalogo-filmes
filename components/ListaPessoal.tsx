@@ -8,7 +8,7 @@ import GradeFilmes from "./GradeFilmes";
 
 const classeTitulo = "font-display mb-6 text-3xl leading-none font-extrabold break-words uppercase sm:text-4xl";
 
-/** A aba "Quero assistir" ou "Já assisti": os filmes que a pessoa marcou. */
+/** Uma aba pessoal ("Quero assistir", "Assistindo" ou "Já assisti"): os títulos que a pessoa marcou. */
 export default async function ListaPessoal({ lista }: { lista: ListaUrl }) {
   const usuario = await usuarioAtual();
 

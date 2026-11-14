@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatarNota } from "@/lib/formatar";
+import { hrefDoTitulo } from "@/lib/listas";
 import type { FilmeResumo } from "@/lib/tmdb";
 import { Estrela } from "./InfoFilme";
 
 export default function CartaoFilme({ filme }: { filme: FilmeResumo }) {
   return (
-    <Link href={`/filme/${filme.id}`} className="group block rounded-lg">
+    <Link href={hrefDoTitulo(filme)} className="group block rounded-lg">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-poltrona shadow-[0_18px_36px_-20px_rgb(0_0_0/0.9)] ring-1 ring-tela/10 transition duration-300 group-hover:shadow-[0_28px_50px_-18px_rgb(0_0_0/0.95)] group-hover:ring-projetor/80 motion-safe:group-hover:-translate-y-1.5">
         {filme.posterUrl ? (
           <Image
@@ -20,6 +21,11 @@ export default function CartaoFilme({ filme }: { filme: FilmeResumo }) {
           <div className="font-display flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--color-projetor)_18%,transparent),transparent_70%)] p-4 text-center text-2xl leading-none font-extrabold uppercase">
             {filme.titulo}
           </div>
+        )}
+        {filme.tipo === "serie" && (
+          <span className="absolute top-2 left-2 rounded-full bg-sala/85 px-2.5 py-0.5 text-[0.7rem] font-semibold tracking-wider text-projetor uppercase ring-1 ring-projetor/40 backdrop-blur-sm">
+            Série
+          </span>
         )}
       </div>
       <h3 className="mt-3 line-clamp-1 text-sm font-semibold transition-colors group-hover:text-projetor">

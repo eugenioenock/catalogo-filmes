@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { hrefDoTitulo } from "@/lib/listas";
 import type { FilmeResumo } from "@/lib/tmdb";
 import InfoFilme from "./InfoFilme";
 
@@ -64,13 +65,13 @@ export default function Banner({ filme }: { filme: FilmeResumo }) {
             style={atraso(1)}
           >
             <Link
-              href={`/filme/${filme.id}`}
+              href={hrefDoTitulo(filme)}
               className="rounded-full bg-projetor px-7 py-3 font-semibold text-sala shadow-[0_8px_32px_-8px] shadow-projetor/60 transition-colors hover:bg-projetor-forte"
             >
               Ver detalhes
             </Link>
             <Link
-              href={`/filme/${filme.id}#onde-assistir`}
+              href={`${hrefDoTitulo(filme)}#onde-assistir`}
               className="rounded-full bg-tela/12 px-7 py-3 font-semibold text-tela ring-1 ring-tela/25 backdrop-blur-md transition-colors hover:bg-tela/22"
             >
               Onde assistir
