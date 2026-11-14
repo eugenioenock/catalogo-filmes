@@ -20,6 +20,25 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Supabase (contas e listas pessoais)
+
+O login e as listas "Quero assistir" e "Já assisti" usam o [Supabase](https://supabase.com).
+Sem as chaves abaixo o catálogo funciona normalmente, só sem login.
+
+1. Crie um projeto no Supabase (o plano gratuito basta).
+2. No **SQL Editor**, cole e rode o arquivo `supabase/esquema.sql` (pode rodar de novo sem erro).
+3. Em **Authentication → Sign In / Providers → Email**, desligue **Confirm email**.
+4. Em **Project Settings → API Keys**, copie a URL do projeto e a *publishable key*
+   (`sb_publishable_…`; em projetos antigos, a *anon key*) para o `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx
+```
+
+Use só a chave pública. A *secret key* (ou *service_role*) nunca vai para o projeto.
+Na Vercel, cadastre as duas variáveis junto com `TMDB_TOKEN`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
