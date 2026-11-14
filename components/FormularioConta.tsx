@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { criarConta, entrar } from "@/app/conta/acoes";
-import type { EstadoConta, ModoConta } from "@/lib/conta";
+import { NOME_MAXIMO, type EstadoConta, type ModoConta } from "@/lib/conta";
 
 const TEXTOS = {
   entrar: {
@@ -24,7 +24,7 @@ const TEXTOS = {
   },
 } as const;
 
-const INICIAL: EstadoConta = { erro: null, email: "" };
+const INICIAL: EstadoConta = { erro: null, nome: "", email: "" };
 
 const classeCampo =
   "w-full rounded-xl border border-tela/15 bg-sala/60 px-4 py-3 text-tela placeholder:text-nevoa transition-colors focus:border-projetor/70 focus:outline-none";
@@ -37,6 +37,24 @@ export default function FormularioConta({ modo, volta }: { modo: ModoConta; volt
   return (
     <form action={acao} className="grid gap-5" noValidate>
       <input type="hidden" name="volta" value={volta} />
+
+      {modo === "criar" && (
+        <div className="grid gap-2">
+          <label htmlFor="nome" className="text-sm font-medium text-tela/90">
+            Como quer ser chamado?
+          </label>
+          <input
+            id="nome"
+            name="nome"
+            type="text"
+            autoComplete="given-name"
+            required
+            maxLength={NOME_MAXIMO}
+            defaultValue={estado.nome}
+            className={classeCampo}
+          />
+        </div>
+      )}
 
       <div className="grid gap-2">
         <label htmlFor="email" className="text-sm font-medium text-tela/90">
