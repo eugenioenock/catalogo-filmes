@@ -249,6 +249,39 @@ describe("tmdb", () => {
       posterUrl: "https://image.tmdb.org/t/p/w342/s1399.jpg",
     });
   });
+  it("gêneros de série que o TMDB devolve em inglês aparecem em português", async () => {
+    rotear({
+      "/genre/tv/list": {
+        genres: [
+          { id: 10759, name: "Action & Adventure" },
+          { id: 10765, name: "Sci-Fi & Fantasy" },
+          { id: 10768, name: "War & Politics" },
+          { id: 18, name: "Drama" },
+        ],
+      },
+      "/discover/tv": { page: 1, total_pages: 1, results: [serie(1, { genre_ids: [10759, 10765, 10768, 18] })] },
+    });
+    expect((await listarTitulos({ tipo: "serie", streaming: null, nota: null, pagina: 1 })).filmes[0].generos).toEqual([
+      "Ação e Aventura",
+      "Ficção científica e Fantasia",
+      "Guerra e Política",
+      "Drama",
+    ]);
+  });
+  it("detalharSerie também traduz os gêneros em inglês", async () => {
+    rotear({
+      "/tv/7?": {
+        ...serie(7),
+        number_of_seasons: 1,
+        status: "Ended",
+        genres: [
+          { id: 10765, name: "Sci-Fi & Fantasy" },
+          { id: 18, name: "Drama" },
+        ],
+      },
+    });
+    expect((await detalharSerie(7)).generos).toEqual(["Ficção científica e Fantasia", "Drama"]);
+  });
   it("série sem data e sem pôster vira ano null e pôster null", async () => {
     rotear({
       "/genre/tv/list": generosTv,

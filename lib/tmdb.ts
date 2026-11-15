@@ -151,13 +151,24 @@ function streamingsDe(dados: TmdbProvidersBR | undefined): Streaming[] {
   }));
 }
 
+/** Gêneros de série que o TMDB devolve em inglês mesmo com language=pt-BR. */
+const GENEROS_DE_SERIE_EM_PORTUGUES: Record<number, string> = {
+  10759: "Ação e Aventura",
+  10765: "Ficção científica e Fantasia",
+  10768: "Guerra e Política",
+};
+
+function nomeDoGenero(tipo: Tipo, g: { id: number; name: string }): string {
+  return (tipo === "serie" && GENEROS_DE_SERIE_EM_PORTUGUES[g.id]) || g.name;
+}
+
 /** id do gênero → nome, para um tipo. */
 async function generosDe(tipo: Tipo): Promise<Map<number, string>> {
   const { genres } = await tmdbGet<{ genres: { id: number; name: string }[] }>(
     `/genre/${CAMINHO[tipo]}/list`,
     { language: "pt-BR" },
   );
-  return new Map(genres.map((g) => [g.id, g.name]));
+  return new Map(genres.map((g) => [g.id, nomeDoGenero(tipo, g)]));
 }
 
 function nomesDosGeneros(ids: number[], nomes: Map<number, string>): string[] {
@@ -267,7 +278,7 @@ export const detalharSerie = cache(async (id: number): Promise<SerieDetalhe> => 
     ...resumir(
       "serie",
       d,
-      d.genres.map((g) => g.name),
+      d.genres.map((g) => nomeDoGenero("serie", g)),
     ),
     temporadas: d.number_of_seasons ?? null,
     anoFim: anoDe(d.last_air_date),
