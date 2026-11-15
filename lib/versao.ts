@@ -39,3 +39,23 @@ export function proximaVersao(atual: string, mudancas: Mudancas, maior = false):
   if (mudancas.novidades.length > 0) return `${ma}.${me + 1}.0`;
   return `${ma}.${me}.${co + 1}`;
 }
+
+/**
+ * O que impede lançar a versão `nova`, ou null. Pega uma versão que ficou pela metade
+ * (commit sem tag: o package.json já passou da última tag) e uma tag que já existe.
+ */
+export function problemaAntesDeLancar(o: {
+  versaoAtual: string;
+  ultimaTag: string;
+  nova: string;
+  tags: string[];
+}): string | null {
+  if (`v${o.versaoAtual}` !== o.ultimaTag) {
+    return (
+      `A versão do package.json (${o.versaoAtual}) não bate com a última tag (${o.ultimaTag}). ` +
+      "Uma versão anterior pode ter ficado pela metade: confira o git log e as tags antes de lançar."
+    );
+  }
+  if (o.tags.includes(`v${o.nova}`)) return `A tag v${o.nova} já existe.`;
+  return null;
+}

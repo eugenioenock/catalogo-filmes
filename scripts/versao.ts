@@ -5,7 +5,7 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { classificarCommits, proximaVersao, type Versao } from "../lib/versao.ts";
+import { classificarCommits, problemaAntesDeLancar, proximaVersao, type Versao } from "../lib/versao.ts";
 
 /** Git sem shell: os argumentos vão como lista, nunca montados num texto de comando. */
 function git(...args: string[]): string {
@@ -56,6 +56,14 @@ if (nova === null) {
   sair(`Nada para lançar desde ${tag}: só bastidores (testes, documentação, organização).`, 0);
 }
 
+const problema = problemaAntesDeLancar({
+  versaoAtual: pacote.version,
+  ultimaTag: tag,
+  nova,
+  tags: git("tag", "--list", "v*").split("\n").filter(Boolean),
+});
+if (problema) sair(problema, 1);
+
 const lista = (titulo: string, itens: string[]) =>
   itens.length ? `\n${titulo}:\n${itens.map((i) => `  - ${i}`).join("\n")}` : "";
 console.log(`Versão ${pacote.version} → ${nova}${lista("Novidades", mudancas.novidades)}${lista("Correções e melhorias", mudancas.correcoes)}`);
@@ -72,16 +80,19 @@ gravarJson("package-lock.json", trava);
 const versoes = lerJson<Versao[]>("lib/versoes.json");
 gravarJson("lib/versoes.json", [{ versao: nova, data: hojeIso(), ...mudancas }, ...versoes]);
 
-git("add", "package.json", "package-lock.json", "lib/versoes.json");
-git(
-  "commit",
-  "-m",
-  `chore: versão ${nova}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`,
-  "--",
-  "package.json",
-  "package-lock.json",
-  "lib/versoes.json",
-);
-git("tag", "-a", `v${nova}`, "-m", `Versão ${nova}`);
+const ARQUIVOS = ["package.json", "package-lock.json", "lib/versoes.json"];
+try {
+  git("add", ...ARQUIVOS);
+  git("commit", "-m", `chore: versão ${nova}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`, "--", ...ARQUIVOS);
+} catch {
+  // Sem commit, a versão não existe: devolve os três arquivos ao que eram, sem deixar a árvore suja.
+  git("restore", "--staged", "--worktree", "--", ...ARQUIVOS);
+  sair(`O commit da versão ${nova} falhou (veja a mensagem do git acima). Os arquivos voltaram ao que eram; nada foi lançado.`, 1);
+}
+try {
+  git("tag", "-a", `v${nova}`, "-m", `Versão ${nova}`);
+} catch {
+  sair(`O commit "chore: versão ${nova}" foi feito, mas a tag falhou. Crie-a com:\n  git tag -a v${nova} -m "Versão ${nova}"`, 1);
+}
 
 console.log(`\nVersão ${nova} criada. Para publicar: git push origin main --follow-tags`);
