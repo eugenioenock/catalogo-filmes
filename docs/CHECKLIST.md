@@ -7,8 +7,6 @@ Site: https://catalogo-filmes-chi-navy.vercel.app
 
 ## 1. Conferências suas no site publicado
 
-- [ ] Entrar com a sua conta e salvar o seu nome (o pedido de "Complete seu cadastro").
-- [ ] Marcar um filme e uma série no site publicado e ver as abas e a fileira "Para você".
 - [ ] Testar no celular, no Wi-Fi de casa: os pôsteres que não carregam mostram o nome.
 
 ## 2. Limpeza (só com o seu OK)
@@ -19,8 +17,6 @@ Site: https://catalogo-filmes-chi-navy.vercel.app
 
 ## 3. Detalhes pequenos
 
-- [ ] As páginas de filme e de série (`app/filme/[id]/page.tsx` e `app/serie/[id]/page.tsx`)
-      ainda repetem quase o mesmo código. Juntar o que é igual.
 - [ ] Pôsteres no Wi-Fi de casa ainda podem demorar. Opcional: ligar a otimização de imagens
       da Vercel (atenção: o plano gratuito tem cota mensal).
 
@@ -63,3 +59,6 @@ Catálogo
 - [x] Teste que garante que marcar um título atualiza a fileira (`0462c98`, 2026-11-14).
 - [x] Pôster que não carrega mostra o nome do título (`d2b36a7`, 2026-11-14).
 - [x] Filtro de nota diz "Nota 8 ou mais" para leitores de tela (`6317041`, 2026-11-14).
+- [x] Você salvou o seu nome no site publicado (conferido por você, 2026-11-14).
+- [x] Você marcou um filme e uma série no site publicado e viu as abas e o "Para você" (conferido por você, 2026-11-14).
+- [x] Páginas de filme e de série usam um componente só, `PaginaDeTitulo` (`63ca2df`, 2026-11-14).
