@@ -25,7 +25,8 @@ export default function ParaVoce(props: Props) {
   );
 }
 
-async function FileiraParaVoce({ tipo, streaming, nota }: Props) {
+/** Exportada para os testes de falha (TMDB ou Supabase fora do ar); a página usa ParaVoce. */
+export async function FileiraParaVoce({ tipo, streaming, nota }: Props) {
   let recomendacoes: Recomendacao[];
   try {
     recomendacoes = await montarParaVoce({ tipo, streaming, nota });
