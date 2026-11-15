@@ -11,9 +11,7 @@ Site: https://catalogo-filmes-chi-navy.vercel.app
 
 ## 2. Limpeza (só com o seu OK)
 
-- [ ] Apagar as 10 contas de teste `teste.cinecatalogo.*@example.com` e as marcações delas,
-      entre elas as 2 séries de teste (você autorizou em 2026-11-14). Falta rodar o SQL no
-      painel do Supabase, porque a ferramenta do Claude recusa comandos que apagam dados.
+- (nada pendente)
 
 ## 3. Detalhes pequenos
 
@@ -64,3 +62,5 @@ Catálogo
 - [x] Você testou no celular, no Wi-Fi de casa: pôster que não carrega mostra o nome (conferido por você, 2026-11-14).
 - [x] Imagens: conexão com o TMDB aberta mais cedo (`5a70aa2`, 2026-11-14). A otimização da Vercel
       ficou desligada de propósito: a cota gratuita (5.000/mês) acabando bloquearia todas as imagens.
+- [x] Contas de teste apagadas: as 10 `teste.cinecatalogo.*@example.com` e as 4 marcações delas,
+      com as 2 séries de teste (você rodou no painel; conferido: 1 conta e 8 marcações, 2026-11-14).
