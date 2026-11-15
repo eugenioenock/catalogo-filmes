@@ -9,7 +9,8 @@ import GradeFilmes from "@/components/GradeFilmes";
 import ListaPessoal from "@/components/ListaPessoal";
 import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
-import { mensagemSemFilmes } from "@/lib/formatar";
+import SeletorTipo from "@/components/SeletorTipo";
+import { mensagemSemFilmes, titulosDoCatalogo } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
 import { buscarTitulos, listarStreamings, listarTitulos } from "@/lib/tmdb";
 
@@ -19,7 +20,7 @@ const TAMANHO_RANKING = 10;
 
 async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   const filtros = lerFiltros(await searchParams);
-  const { streaming, busca, nota, pagina } = filtros;
+  const { tipo, streaming, busca, nota, pagina } = filtros;
 
   // Aba pessoal: os filmes vêm do Supabase, sem chamar o TMDB.
   if (filtros.lista !== null) {
@@ -38,7 +39,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
     listarStreamings(),
     busca
       ? buscarTitulos({ texto: busca, streaming, nota, pagina })
-      : listarTitulos({ tipo: "filme", streaming, nota, pagina }),
+      : listarTitulos({ tipo, streaming, nota, pagina }),
   ]);
   const { filmes, totalPaginas } = resultado;
 
@@ -52,11 +53,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   const grade = vitrine ? filmes.slice(TAMANHO_RANKING) : filmes;
   const mostrarGrade = !vitrine || grade.length > 0;
 
-  const tituloGrade = busca
-    ? `Resultados para “${busca}”`
-    : vitrine
-      ? "Mais filmes nos streamings"
-      : "Filmes nos streamings";
+  const titulos = titulosDoCatalogo(tipo, { busca, vitrine });
 
   return (
     <div className="relative isolate">
@@ -66,11 +63,13 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
 
       <main className={`relative space-y-14 pb-20 ${vitrine ? "-mt-6 sm:-mt-12" : "pt-6"}`}>
         <div className="mx-auto max-w-7xl space-y-3 px-4 sm:px-8">
+          {/* A busca já traz filmes e séries juntos: o seletor só aparece fora dela. */}
+          {!busca && <SeletorTipo filtros={filtros} />}
           <FiltroStreamings streamings={streamings} filtros={filtros} />
           <FiltroNota filtros={filtros} />
         </div>
 
-        {ranking.length > 0 && <EmAlta filmes={ranking} />}
+        {ranking.length > 0 && <EmAlta filmes={ranking} titulo={titulos.emAlta} />}
 
         {mostrarGrade && (
           <section aria-labelledby="grade" className="mx-auto max-w-7xl px-4 sm:px-8">
@@ -78,7 +77,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
               id="grade"
               className="font-display mb-6 text-3xl leading-none font-extrabold break-words uppercase sm:text-4xl"
             >
-              {tituloGrade}
+              {titulos.grade}
             </h2>
             <GradeFilmes
               filmes={grade}

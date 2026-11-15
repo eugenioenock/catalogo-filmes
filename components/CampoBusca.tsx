@@ -17,8 +17,8 @@ export default function CampoBusca({ busca, streaming, nota }: Props) {
         maxLength={100}
         name="busca"
         defaultValue={busca ?? ""}
-        placeholder="Buscar filmes"
-        aria-label="Buscar filmes"
+        placeholder="Buscar filmes e séries"
+        aria-label="Buscar filmes e séries"
         className="min-w-0 flex-1 bg-transparent py-2.5 text-tela placeholder:text-nevoa focus:outline-none"
       />
       {streaming !== null && (

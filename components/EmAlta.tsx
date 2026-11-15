@@ -6,9 +6,9 @@ import Fileira from "./Fileira";
 
 // Os 10 primeiros da lista, que já vem ordenada por popularidade.
 // O número grande é a posição real no ranking.
-export default function EmAlta({ filmes }: { filmes: FilmeResumo[] }) {
+export default function EmAlta({ filmes, titulo }: { filmes: FilmeResumo[]; titulo: string }) {
   return (
-    <Fileira id="em-alta" titulo="Em alta agora">
+    <Fileira id="em-alta" titulo={titulo}>
       <ol className="flex w-max gap-3 px-(--margem) pt-5 pb-6 sm:gap-5">
         {filmes.map((filme, i) => (
           <li key={chaveDoTitulo(filme)} className="shrink-0 snap-start">
