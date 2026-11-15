@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import type { ListaUrl } from "@/lib/listas";
+import type { ListaUrl, Tipo } from "@/lib/listas";
 import AbasListas from "./AbasListas";
 import AreaConta from "./AreaConta";
 import CampoBusca from "./CampoBusca";
@@ -9,6 +9,8 @@ type Props = {
   busca: string | null;
   streaming: number | null;
   nota?: number | null;
+  /** Filmes ou séries: a busca guarda a aba de onde partiu. */
+  tipo?: Tipo;
   nomeComoTitulo?: boolean;
   /** Fica por cima da foto do destaque, sem fundo próprio. */
   sobreposto?: boolean;
@@ -20,6 +22,7 @@ export default function Cabecalho({
   busca,
   streaming,
   nota = null,
+  tipo = "filme",
   nomeComoTitulo = false,
   sobreposto = false,
   listaAtiva,
@@ -41,7 +44,7 @@ export default function Cabecalho({
           </Link>
         </Nome>
         <div className="order-3 basis-full sm:order-2 sm:ml-auto sm:basis-auto">
-          <CampoBusca busca={busca} streaming={streaming} nota={nota} />
+          <CampoBusca busca={busca} streaming={streaming} nota={nota} tipo={tipo} />
         </div>
         <div className="order-2 ml-auto flex min-w-0 justify-end sm:order-3 sm:ml-0">
           <Suspense fallback={null}>

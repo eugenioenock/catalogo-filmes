@@ -64,7 +64,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="relative isolate">
       <LuzAmbiente imagem={vitrine ? filmes[0].backdropUrl : null} />
-      <Cabecalho busca={busca} streaming={streaming} nota={nota} nomeComoTitulo sobreposto={vitrine} listaAtiva={null} />
+      <Cabecalho busca={busca} streaming={streaming} nota={nota} tipo={tipo} nomeComoTitulo sobreposto={vitrine} listaAtiva={null} />
       {vitrine && <Banner filme={filmes[0]} />}
 
       <main className={`relative space-y-14 pb-20 ${vitrine ? "-mt-6 sm:-mt-12" : "pt-6"}`}>

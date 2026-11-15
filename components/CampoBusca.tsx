@@ -1,10 +1,14 @@
+import type { Tipo } from "@/lib/listas";
+
 type Props = {
   busca: string | null;
   streaming: number | null;
   nota: number | null;
+  /** A aba de onde se busca: Séries vai junto na URL para a pessoa voltar a ela depois. */
+  tipo: Tipo;
 };
 
-export default function CampoBusca({ busca, streaming, nota }: Props) {
+export default function CampoBusca({ busca, streaming, nota, tipo }: Props) {
   return (
     <form
       method="get"
@@ -21,6 +25,8 @@ export default function CampoBusca({ busca, streaming, nota }: Props) {
         aria-label="Buscar filmes e séries"
         className="min-w-0 flex-1 bg-transparent py-2.5 text-tela placeholder:text-nevoa focus:outline-none"
       />
+      {/* Os resultados trazem filmes e séries juntos; o tipo só guarda a aba para depois da busca. */}
+      {tipo === "serie" && <input type="hidden" name="tipo" value="series" />}
       {streaming !== null && (
         <input type="hidden" name="streaming" value={streaming} />
       )}

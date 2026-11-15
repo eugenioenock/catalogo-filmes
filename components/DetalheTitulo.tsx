@@ -28,7 +28,7 @@ export default function DetalheTitulo({
   return (
     <div className="relative isolate">
       <LuzAmbiente imagem={titulo.backdropUrl} />
-      <Cabecalho busca={null} streaming={null} sobreposto />
+      <Cabecalho busca={null} streaming={null} tipo={titulo.tipo} sobreposto />
 
       <div
         aria-hidden
