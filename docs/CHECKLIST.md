@@ -7,18 +7,17 @@ Site: https://catalogo-filmes-chi-navy.vercel.app
 
 ## 1. Conferências suas no site publicado
 
-- [ ] Testar no celular, no Wi-Fi de casa: os pôsteres que não carregam mostram o nome.
+- (nada pendente)
 
 ## 2. Limpeza (só com o seu OK)
 
-- [ ] Decidir se apaga as 2 séries de teste da conta de teste (1399 Game of Thrones e 27205
-      "Série de teste"). Hoje elas são usadas nos testes da fileira "Para você".
-- [ ] Decidir se apaga as contas de teste `teste.cinecatalogo.*@example.com` do Supabase.
+- [ ] Apagar as 10 contas de teste `teste.cinecatalogo.*@example.com` e as marcações delas,
+      entre elas as 2 séries de teste (você autorizou em 2026-11-14). Falta rodar o SQL no
+      painel do Supabase, porque a ferramenta do Claude recusa comandos que apagam dados.
 
 ## 3. Detalhes pequenos
 
-- [ ] Pôsteres no Wi-Fi de casa ainda podem demorar. Opcional: ligar a otimização de imagens
-      da Vercel (atenção: o plano gratuito tem cota mensal).
+- (nada pendente)
 
 ## 4. Próximas etapas (ideias das specs; cada uma começa com um brainstorming)
 
@@ -62,3 +61,6 @@ Catálogo
 - [x] Você salvou o seu nome no site publicado (conferido por você, 2026-11-14).
 - [x] Você marcou um filme e uma série no site publicado e viu as abas e o "Para você" (conferido por você, 2026-11-14).
 - [x] Páginas de filme e de série usam um componente só, `PaginaDeTitulo` (`63ca2df`, 2026-11-14).
+- [x] Você testou no celular, no Wi-Fi de casa: pôster que não carrega mostra o nome (conferido por você, 2026-11-14).
+- [x] Imagens: conexão com o TMDB aberta mais cedo (`5a70aa2`, 2026-11-14). A otimização da Vercel
+      ficou desligada de propósito: a cota gratuita (5.000/mês) acabando bloquearia todas as imagens.
