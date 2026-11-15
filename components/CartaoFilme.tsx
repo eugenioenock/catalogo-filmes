@@ -34,7 +34,7 @@ export default function CartaoFilme({ filme, streaming, motivo }: Props) {
             Série
           </span>
         )}
-        {streaming && (
+        {streaming?.logoUrl && (
           <Image
             src={streaming.logoUrl}
             alt={streaming.nome}
