@@ -20,7 +20,19 @@ Comando de versão (da revisão final; nenhum afeta o site):
 - [ ] Aceitar "feat!:" e "Feat:" (hoje somem sem aviso) e tirar itens repetidos.
 - [ ] Mensagem melhor quando faltam as tags (clone raso) e aviso ao rodar fora do `main`.
 
-## 4. Próximas etapas (ideias das specs; cada uma começa com um brainstorming)
+## 4. Melhorias recomendadas (avaliação do app em 2026-11-14, em ordem de importância)
+
+- [ ] Banco separado para desenvolvimento: hoje o site local, as prévias e o site publicado usam
+      o mesmo banco do Supabase, e um teste errado mexe nos dados reais. Criar um segundo
+      projeto Supabase (gratuito) só para o desenvolvimento e as prévias.
+- [ ] Testes automáticos no GitHub: um GitHub Actions que rode testes, lint e build a cada push,
+      para nada quebrado chegar ao `main`.
+- [ ] "Esqueci minha senha": hoje quem esquece a senha fica sem acesso. Prioridade se outras
+      pessoas forem usar o site.
+- [ ] Aviso quando algo falha no site publicado: hoje os erros só ficam nos logs da Vercel.
+      Avaliar um aviso automático (por exemplo, por e-mail) quando o site crescer.
+
+## 5. Próximas etapas (ideias das specs; cada uma começa com um brainstorming)
 
 Recomendações
 - [ ] Cadastrar os streamings que você assina e recomendar só deles.
@@ -35,7 +47,7 @@ Listas pessoais
 - [ ] Compartilhar listas com outras pessoas.
 
 Conta
-- [ ] "Esqueci minha senha" e confirmação por e-mail.
+- [ ] Confirmação por e-mail.
 - [ ] Login com Google.
 - [ ] Editar perfil, trocar e-mail ou senha, excluir a conta.
 
