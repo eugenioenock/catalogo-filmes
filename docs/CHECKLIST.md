@@ -64,3 +64,4 @@ Catálogo
       ficou desligada de propósito: a cota gratuita (5.000/mês) acabando bloquearia todas as imagens.
 - [x] Contas de teste apagadas: as 10 `teste.cinecatalogo.*@example.com` e as 4 marcações delas,
       com as 2 séries de teste (você rodou no painel; conferido: 1 conta e 8 marcações, 2026-11-14).
+- [x] Versão no rodapé e histórico em `/novidades`, com `npm run versao` para lançar (`2cb99b4`, v1.0.0, 2026-11-14).
