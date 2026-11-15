@@ -2,10 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatarNota } from "@/lib/formatar";
 import { hrefDoTitulo } from "@/lib/listas";
-import type { FilmeResumo } from "@/lib/tmdb";
+import type { FilmeResumo, Streaming } from "@/lib/tmdb";
 import { Estrela } from "./InfoFilme";
 
-export default function CartaoFilme({ filme }: { filme: FilmeResumo }) {
+type Props = {
+  filme: FilmeResumo;
+  // Só a fileira "Para você" passa estes dois: onde assistir e por que o título foi sugerido.
+  streaming?: Streaming;
+  motivo?: string;
+};
+
+export default function CartaoFilme({ filme, streaming, motivo }: Props) {
   return (
     <Link href={hrefDoTitulo(filme)} className="group block rounded-lg">
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-poltrona shadow-[0_18px_36px_-20px_rgb(0_0_0/0.9)] ring-1 ring-tela/10 transition duration-300 group-hover:shadow-[0_28px_50px_-18px_rgb(0_0_0/0.95)] group-hover:ring-projetor/80 motion-safe:group-hover:-translate-y-1.5">
@@ -27,6 +34,16 @@ export default function CartaoFilme({ filme }: { filme: FilmeResumo }) {
             Série
           </span>
         )}
+        {streaming && (
+          <Image
+            src={streaming.logoUrl}
+            alt={streaming.nome}
+            title={streaming.nome}
+            width={28}
+            height={28}
+            className="absolute right-2 bottom-2 size-7 rounded-full ring-1 ring-tela/20"
+          />
+        )}
       </div>
       <h3 className="mt-3 line-clamp-1 text-sm font-semibold transition-colors group-hover:text-projetor">
         {filme.titulo}
@@ -39,6 +56,7 @@ export default function CartaoFilme({ filme }: { filme: FilmeResumo }) {
         </span>
         {filme.ano}
       </p>
+      {motivo && <p className="mt-1 line-clamp-2 text-xs text-nevoa">{motivo}</p>}
     </Link>
   );
 }

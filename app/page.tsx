@@ -9,6 +9,7 @@ import GradeFilmes from "@/components/GradeFilmes";
 import ListaPessoal from "@/components/ListaPessoal";
 import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
+import ParaVoce from "@/components/ParaVoce";
 import SeletorTipo from "@/components/SeletorTipo";
 import { mensagemSemFilmes, titulosDoCatalogo } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
@@ -68,6 +69,13 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
           <FiltroStreamings streamings={streamings} filtros={filtros} />
           <FiltroNota filtros={filtros} />
         </div>
+
+        {/* Própria fronteira: as recomendações são lentas e não seguram o resto do catálogo. */}
+        {pagina === 1 && !busca && (
+          <Suspense fallback={null}>
+            <ParaVoce tipo={tipo} streaming={streaming} nota={nota} />
+          </Suspense>
+        )}
 
         {ranking.length > 0 && <EmAlta filmes={ranking} titulo={titulos.emAlta} />}
 
