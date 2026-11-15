@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import DetalheTitulo from "@/components/DetalheTitulo";
+import TelaCarregando from "@/components/TelaCarregando";
 import { formatarDuracao } from "@/lib/formatar";
 import { lerIdFilme } from "@/lib/parametros";
 import { detalharFilme, FilmeNaoEncontradoError } from "@/lib/tmdb";
@@ -40,11 +41,7 @@ async function Detalhes({ params }: { params: Params }) {
 export default function PaginaFilme({ params }: { params: Params }) {
   return (
     <Suspense
-      fallback={
-        <p className="font-display p-16 text-center text-2xl font-bold text-nevoa uppercase motion-safe:animate-pulse">
-          Apagando as luzes…
-        </p>
-      }
+      fallback={<TelaCarregando />}
     >
       <Detalhes params={params} />
     </Suspense>

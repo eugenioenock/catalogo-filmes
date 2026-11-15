@@ -11,6 +11,7 @@ import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
 import ParaVoce from "@/components/ParaVoce";
 import SeletorTipo from "@/components/SeletorTipo";
+import TelaCarregando from "@/components/TelaCarregando";
 import { mensagemSemFilmes, titulosDoCatalogo } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
 import { fileiraPodeAparecer } from "@/lib/paraVoce";
@@ -111,11 +112,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
 export default function Home({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense
-      fallback={
-        <p className="font-display p-16 text-center text-2xl font-bold text-nevoa uppercase motion-safe:animate-pulse">
-          Apagando as luzes…
-        </p>
-      }
+      fallback={<TelaCarregando />}
     >
       <Catalogo searchParams={searchParams} />
     </Suspense>
