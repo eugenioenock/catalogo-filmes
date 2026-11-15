@@ -25,6 +25,8 @@ export default function FiltroNota({ filtros }: { filtros: FiltrosCatalogo }) {
             key={nota ?? "qualquer"}
             href={montarHref(filtros, { nota })}
             aria-current={ativa ? "page" : undefined}
+            // A tela mostra "★ 8+"; o leitor de tela precisa ouvir que é uma nota.
+            aria-label={nota === null ? "Qualquer nota" : `Nota ${nota} ou mais`}
             className={classeFiltro(ativa, false)}
           >
             {nota === null ? (
