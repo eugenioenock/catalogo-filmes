@@ -192,6 +192,48 @@ describe("montarParaVoce", () => {
     expect(falsos.listarTitulos).not.toHaveBeenCalled();
   });
 
+  it("a reserva respeita os filtros: streaming e nota vão ao TMDB, e o logo é o do filtro", async () => {
+    falsos.listarTodasMarcacoes.mockResolvedValue([marca("serie", 1399, "assistindo")]);
+    falsos.detalharSerie.mockResolvedValue({ generoIds: [18] });
+    falsos.nomesDosGeneros.mockResolvedValue(new Map([[18, "Drama"]]));
+    falsos.listarTitulos.mockResolvedValue({
+      filmes: [resumo(60, "filme", ["Drama"]), resumo(61, "filme", ["Drama"])],
+      pagina: 1,
+      totalPaginas: 1,
+    });
+    falsos.streamingsDoTitulo.mockImplementation(async (_tipo: Tipo, id: number) =>
+      id === 60 ? [NETFLIX, GLOBOPLAY] : [NETFLIX],
+    );
+    const r = await montarParaVoce({ tipo: "filme", streaming: 307, nota: 7 });
+    expect(falsos.listarTitulos).toHaveBeenCalledWith(expect.objectContaining({ streaming: 307, nota: 7 }));
+    expect(r.map((x) => [x.titulo.id, x.streaming.id])).toEqual([[60, 307]]);
+  });
+
+  it("sementes e reserva somadas nunca passam de 20, e as sementes vêm primeiro", async () => {
+    falsos.listarTodasMarcacoes.mockResolvedValue([marca("filme", 27205, "ja_assisti", "A Origem")]);
+    // 7 cartões das sementes: um a menos que o mínimo, então a reserva completa.
+    falsos.recomendacoesDe.mockResolvedValue(Array.from({ length: 7 }, (_, i) => c(10 + i)));
+    falsos.detalharFilme.mockResolvedValue({ generoIds: [878] });
+    falsos.nomesDosGeneros.mockResolvedValue(new Map([[878, "Ficção científica"]]));
+    falsos.listarTitulos.mockResolvedValue({
+      filmes: Array.from({ length: 30 }, (_, i) => resumo(100 + i, "filme", ["Ficção científica"])),
+      pagina: 1,
+      totalPaginas: 2,
+    });
+    const r = await montarParaVoce({ tipo: "filme", ...sem });
+    expect(r).toHaveLength(20);
+    expect(r.slice(0, 7).every((x) => x.motivo === "Porque você assistiu A Origem")).toBe(true);
+    expect(r.slice(7).every((x) => x.motivo === "Porque você gosta de Ficção científica")).toBe(true);
+  });
+
+  it("o filtro de nota vale para as recomendações das sementes", async () => {
+    const comNota = (id: number, nota: number): Candidato => ({ titulo: { ...resumo(id, "serie"), nota }, votos: 800 });
+    falsos.listarTodasMarcacoes.mockResolvedValue([marca("serie", 1399, "assistindo")]);
+    falsos.recomendacoesDe.mockResolvedValue([comNota(10, 6.4), comNota(11, 8.6)]);
+    const r = await montarParaVoce({ tipo: "serie", streaming: null, nota: 8 });
+    expect(r.map((x) => x.titulo.id)).toEqual([11]);
+  });
+
   it("uma marcação antiga, além das 20 mais recentes, nunca é recomendada", async () => {
     const marcas = Array.from({ length: 25 }, (_, i) => marca("serie", 101 + i, "ja_assisti"));
     falsos.listarTodasMarcacoes.mockResolvedValue(marcas);
