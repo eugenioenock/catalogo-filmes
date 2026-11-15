@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Big_Shoulders, Instrument_Sans } from "next/font/google";
+import { preconnect } from "react-dom";
 import Rodape from "@/components/Rodape";
 import "./globals.css";
 
@@ -20,6 +21,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // Pôsteres, fundos e logos vêm direto do servidor de imagens do TMDB (sem a otimização da
+  // Vercel, que no plano gratuito tem cota mensal). Abrir a conexão logo no <head> adianta a
+  // primeira imagem de cada página, o que ajuda em redes lentas até esse servidor.
+  preconnect("https://image.tmdb.org");
+
   return (
     <html
       lang="pt-BR"
