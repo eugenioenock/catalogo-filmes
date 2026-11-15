@@ -26,7 +26,8 @@ export default function FiltroStreamings({ streamings, filtros }: Props) {
           aria-current={filtros.streaming === s.id ? "page" : undefined}
           className={classeFiltro(filtros.streaming === s.id, true)}
         >
-          <Image src={s.logoUrl} alt="" width={28} height={28} className="size-7 rounded-full" />
+          {/* listarStreamings já tira quem não tem logo; a checagem só satisfaz o tipo. */}
+          {s.logoUrl && <Image src={s.logoUrl} alt="" width={28} height={28} className="size-7 rounded-full" />}
           {s.nome}
         </Link>
       ))}

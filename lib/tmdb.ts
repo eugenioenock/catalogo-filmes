@@ -11,7 +11,8 @@ const IMAGENS = "https://image.tmdb.org/t/p";
 // Lojas (aluguel/compra) e serviços gratuitos: não são assinatura.
 const IDS_FORA_DA_ASSINATURA = [2, 3, 10, 68, 2791];
 
-export type Streaming = { id: number; nome: string; logoUrl: string };
+/** `logoUrl` é null quando o TMDB não tem o logo: o streaming continua valendo, só sem imagem. */
+export type Streaming = { id: number; nome: string; logoUrl: string | null };
 
 export class FilmeNaoEncontradoError extends Error {}
 export class TmdbIndisponivelError extends Error {}
@@ -79,7 +80,7 @@ export async function listarStreamings(): Promise<Streaming[]> {
     .map((p) => ({
       id: p.provider_id,
       nome: p.provider_name,
-      logoUrl: imagemUrl(p.logo_path, "w92")!,
+      logoUrl: imagemUrl(p.logo_path, "w92"),
     }));
 }
 
@@ -149,7 +150,7 @@ function streamingsDe(dados: TmdbProvidersBR | undefined): Streaming[] {
   return (dados?.results?.BR?.flatrate ?? []).map((p) => ({
     id: p.provider_id,
     nome: p.provider_name,
-    logoUrl: imagemUrl(p.logo_path, "w92") ?? "",
+    logoUrl: imagemUrl(p.logo_path, "w92"),
   }));
 }
 

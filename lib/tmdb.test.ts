@@ -526,6 +526,14 @@ describe("tmdb", () => {
       ]);
       expect(await streamingsDoTitulo("filme", 6)).toEqual([]);
     });
+    it("streaming sem logo no TMDB continua na lista, com logoUrl null (não texto vazio)", async () => {
+      rotear({
+        "/tv/7/watch/providers": {
+          results: { BR: { flatrate: [provider(99, "Sem Logo", null as unknown as string)] } },
+        },
+      });
+      expect(await streamingsDoTitulo("serie", 7)).toEqual([{ id: 99, nome: "Sem Logo", logoUrl: null }]);
+    });
     it("listarTitulos com gêneros envia with_genres com OU e 200 votos mesmo sem nota", async () => {
       rotear({ "/genre/movie/list": generos, "/discover/movie": { page: 1, total_pages: 1, results: [] } });
       await listarTitulos({ tipo: "filme", generos: [878, 18], streaming: null, nota: null, pagina: 1 });

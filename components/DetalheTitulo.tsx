@@ -119,13 +119,23 @@ export default function DetalheTitulo({
                     key={s.id}
                     className="flex items-center gap-4 rounded-2xl bg-poltrona/70 p-3 pr-5 ring-1 ring-tela/10 backdrop-blur-md"
                   >
-                    <Image
-                      src={s.logoUrl}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="size-14 rounded-xl"
-                    />
+                    {s.logoUrl ? (
+                      <Image
+                        src={s.logoUrl}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="size-14 rounded-xl"
+                      />
+                    ) : (
+                      // Sem logo no TMDB: a inicial ocupa o mesmo lugar, e o nome ao lado diz qual é.
+                      <span
+                        aria-hidden
+                        className="font-display flex size-14 shrink-0 items-center justify-center rounded-xl bg-sala text-2xl font-extrabold text-projetor uppercase ring-1 ring-tela/10"
+                      >
+                        {s.nome.charAt(0)}
+                      </span>
+                    )}
                     <div>
                       <p className="font-semibold">{s.nome}</p>
                       <p className="text-sm text-nevoa">Incluído na assinatura</p>
