@@ -296,6 +296,24 @@ describe("tmdb", () => {
       sinopse: "",
     });
   });
+  it("série sem nome em português usa o nome original, em vez de ficar sem título", async () => {
+    rotear({
+      "/genre/tv/list": generosTv,
+      "/discover/tv": { page: 1, total_pages: 1, results: [serie(70523, { name: "", original_name: "Dark" })] },
+    });
+    expect((await listarTitulos({ tipo: "serie", streaming: null, nota: null, pagina: 1 })).filmes[0].titulo).toBe(
+      "Dark",
+    );
+  });
+  it("filme sem título em português usa o título original", async () => {
+    rotear({
+      "/genre/movie/list": generos,
+      "/discover/movie": { page: 1, total_pages: 1, results: [filme(129, { title: "", original_title: "千と千尋の神隠し" })] },
+    });
+    expect((await listarTitulos({ tipo: "filme", streaming: null, nota: null, pagina: 1 })).filmes[0].titulo).toBe(
+      "千と千尋の神隠し",
+    );
+  });
   it("totalPaginas é limitado a 500", async () => {
     rotear({
       "/genre/movie/list": generos,

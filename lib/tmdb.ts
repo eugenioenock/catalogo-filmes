@@ -113,6 +113,12 @@ type TmdbTitulo = {
   release_date?: string | null;
   name?: string;
   first_air_date?: string | null;
+  /**
+   * O nome na língua original. Sem tradução para pt-BR, o TMDB hoje já põe o original em
+   * title/name (conferido em 2026-11); usar estes campos é só a garantia de nunca ter cartão sem nome.
+   */
+  original_title?: string;
+  original_name?: string;
   poster_path: string | null;
   backdrop_path: string | null;
   overview?: string | null;
@@ -136,7 +142,7 @@ function resumir(tipo: Tipo, f: TmdbTitulo, generos: string[]): FilmeResumo {
   return {
     tipo,
     id: f.id,
-    titulo: (tipo === "filme" ? f.title : f.name) ?? "",
+    titulo: (tipo === "filme" ? f.title || f.original_title : f.name || f.original_name) ?? "",
     ano: anoDe(tipo === "filme" ? f.release_date : f.first_air_date),
     posterUrl: imagemUrl(f.poster_path, "w342"),
     backdropUrl: imagemUrl(f.backdrop_path, "w1280"),
