@@ -7,6 +7,7 @@ import BotoesMarcar, { BotoesMarcarCarregando } from "./BotoesMarcar";
 import Cabecalho from "./Cabecalho";
 import InfoFilme from "./InfoFilme";
 import LuzAmbiente from "./LuzAmbiente";
+import Poster from "./Poster";
 
 const atraso = (s: number) => ({ animationDelay: `${s}s` });
 
@@ -60,19 +61,17 @@ export default function DetalheTitulo({
             className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-xl bg-poltrona shadow-[0_40px_80px_-24px_rgb(0_0_0/0.95)] ring-1 ring-tela/15 motion-safe:animate-surgir sm:w-56 lg:w-64"
             style={atraso(0.4)}
           >
-            {titulo.posterUrl ? (
-              <Image
-                src={titulo.posterUrl}
-                alt={`Pôster de ${titulo.titulo}`}
-                fill
-                sizes="(min-width: 1024px) 256px, (min-width: 640px) 224px, 144px"
-                className="object-cover"
-              />
-            ) : (
-              <div className="font-display flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--color-projetor)_18%,transparent),transparent_70%)] p-4 text-center text-2xl leading-none font-extrabold uppercase">
-                {titulo.titulo}
-              </div>
-            )}
+            <Poster
+              src={titulo.posterUrl}
+              alt={`Pôster de ${titulo.titulo}`}
+              sizes="(min-width: 1024px) 256px, (min-width: 640px) 224px, 144px"
+              className="object-cover"
+              semImagem={
+                <div className="font-display flex h-full items-center justify-center bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--color-projetor)_18%,transparent),transparent_70%)] p-4 text-center text-2xl leading-none font-extrabold uppercase">
+                  {titulo.titulo}
+                </div>
+              }
+            />
           </div>
 
           <div className="min-w-0 [text-shadow:0_2px_24px_rgb(13_10_18/0.55)]">
