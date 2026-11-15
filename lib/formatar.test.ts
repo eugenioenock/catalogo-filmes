@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { anoDe, formatarDuracao, formatarNota, mensagemSemFilmes } from "./formatar";
+import { anoDe, formatarDuracao, formatarNota, mensagemSemFilmes, textoTemporadas, titulosDoCatalogo } from "./formatar";
 
 describe("formatarDuracao", () => {
   it("135 vira 2h 15min", () => expect(formatarDuracao(135)).toBe("2h 15min"));
@@ -26,21 +26,62 @@ describe("anoDe", () => {
 });
 
 describe("mensagemSemFilmes", () => {
-  const nada = { busca: false, nota: false, streaming: false };
-  it("busca com nota não diz que o filme está fora do streaming", () =>
+  const nada = { tipo: "filme" as const, busca: false, nota: false, streaming: false };
+  it("busca com nota fala em título e não diz que está fora do streaming", () =>
     expect(mensagemSemFilmes({ ...nada, busca: true, nota: true })).toBe(
-      "Nenhum filme com esse nome e essa nota está no streaming agora.",
+      "Nenhum título com esse nome e essa nota está no streaming agora.",
     ));
-  it("busca sem nota mantém a mensagem atual", () =>
-    expect(mensagemSemFilmes({ ...nada, busca: true })).toBe(
-      "Nenhum filme com esse nome está no streaming agora.",
+  it("busca sem nota fala em título", () =>
+    expect(mensagemSemFilmes({ ...nada, busca: true })).toBe("Nenhum título com esse nome está no streaming agora."));
+  it("busca fala em título mesmo em séries", () =>
+    expect(mensagemSemFilmes({ ...nada, tipo: "serie", busca: true })).toBe(
+      "Nenhum título com esse nome está no streaming agora.",
     ));
-  it("nota com streaming escolhido", () =>
-    expect(mensagemSemFilmes({ ...nada, nota: true, streaming: true })).toBe(
-      "Nenhum filme com essa nota neste streaming.",
-    ));
-  it("nota sem streaming escolhido fala dos streamings em geral", () =>
-    expect(mensagemSemFilmes({ ...nada, nota: true })).toBe("Nenhum filme com essa nota nos streamings."));
-  it("sem busca nem nota não culpa a nota", () =>
-    expect(mensagemSemFilmes({ ...nada, streaming: true })).toBe("Nenhum filme encontrado."));
+  it("nota com streaming escolhido", () => {
+    expect(mensagemSemFilmes({ ...nada, nota: true, streaming: true })).toBe("Nenhum filme com essa nota neste streaming.");
+    expect(mensagemSemFilmes({ ...nada, tipo: "serie", nota: true, streaming: true })).toBe(
+      "Nenhuma série com essa nota neste streaming.",
+    );
+  });
+  it("nota sem streaming escolhido fala dos streamings em geral", () => {
+    expect(mensagemSemFilmes({ ...nada, nota: true })).toBe("Nenhum filme com essa nota nos streamings.");
+    expect(mensagemSemFilmes({ ...nada, tipo: "serie", nota: true })).toBe("Nenhuma série com essa nota nos streamings.");
+  });
+  it("sem busca nem nota não culpa a nota", () => {
+    expect(mensagemSemFilmes({ ...nada, streaming: true })).toBe("Nenhum filme encontrado.");
+    expect(mensagemSemFilmes({ ...nada, tipo: "serie", streaming: true })).toBe("Nenhuma série encontrada.");
+  });
+});
+
+describe("textoTemporadas", () => {
+  it("série terminada", () =>
+    expect(textoTemporadas({ temporadas: 3, ano: "2019", anoFim: "2023", terminou: true })).toBe("3 temporadas · 2019–2023"));
+  it("série no ar, uma temporada", () =>
+    expect(textoTemporadas({ temporadas: 1, ano: "2024", anoFim: "2024", terminou: false })).toBe("1 temporada · 2024–"));
+  it("terminou no mesmo ano: um ano só", () =>
+    expect(textoTemporadas({ temporadas: 1, ano: "2020", anoFim: "2020", terminou: true })).toBe("1 temporada · 2020"));
+  it("temporadas desconhecidas: só os anos", () =>
+    expect(textoTemporadas({ temporadas: null, ano: "2019", anoFim: "2021", terminou: true })).toBe("2019–2021"));
+  it("nada conhecido vira null", () =>
+    expect(textoTemporadas({ temporadas: 0, ano: null, anoFim: null, terminou: false })).toBeNull());
+  it("sem anos: só as temporadas", () =>
+    expect(textoTemporadas({ temporadas: 2, ano: null, anoFim: null, terminou: false })).toBe("2 temporadas"));
+});
+
+describe("titulosDoCatalogo", () => {
+  it("filmes na vitrine", () =>
+    expect(titulosDoCatalogo("filme", { busca: null, vitrine: true })).toEqual({
+      grade: "Mais filmes nos streamings",
+      emAlta: "Em alta agora",
+    }));
+  it("séries na vitrine", () =>
+    expect(titulosDoCatalogo("serie", { busca: null, vitrine: true })).toEqual({
+      grade: "Mais séries nos streamings",
+      emAlta: "Séries em alta agora",
+    }));
+  it("fora da vitrine", () => {
+    expect(titulosDoCatalogo("serie", { busca: null, vitrine: false }).grade).toBe("Séries nos streamings");
+    expect(titulosDoCatalogo("filme", { busca: null, vitrine: false }).grade).toBe("Filmes nos streamings");
+  });
+  it("busca", () => expect(titulosDoCatalogo("serie", { busca: "dark", vitrine: false }).grade).toBe("Resultados para “dark”"));
 });

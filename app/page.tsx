@@ -84,6 +84,7 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
               filmes={grade}
               haMaisPaginas={pagina < totalPaginas}
               mensagemVazia={mensagemSemFilmes({
+                tipo: filtros.tipo,
                 busca: busca !== null,
                 nota: nota !== null,
                 streaming: streaming !== null,

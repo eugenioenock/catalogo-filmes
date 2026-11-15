@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hrefDaLista, lerFiltros, lerIdFilme, montarHref } from "./parametros";
+import { hrefDaLista, hrefDoCatalogo, lerFiltros, lerIdFilme, montarHref } from "./parametros";
 
 describe("lerFiltros", () => {
   it("usa padrões quando a URL está vazia", () =>
-    expect(lerFiltros({})).toEqual({ streaming: null, busca: null, nota: null, pagina: 1, lista: null }));
+    expect(lerFiltros({})).toEqual({ tipo: "filme", streaming: null, busca: null, nota: null, pagina: 1, lista: null }));
   it.each(["abc", "0", "-3", "2.5", ""])("pagina inválida %s vira 1", (p) =>
     expect(lerFiltros({ pagina: p }).pagina).toBe(1));
   it("pagina acima de 500 vira 500", () => expect(lerFiltros({ pagina: "9999" }).pagina).toBe(500));
@@ -27,6 +27,26 @@ describe("lerFiltros", () => {
     expect(lerFiltros({ lista: l }).lista).toBeNull());
   it("lista repetida usa o primeiro valor", () =>
     expect(lerFiltros({ lista: ["ja-assisti", "quero-assistir"] }).lista).toBe("ja-assisti"));
+  it("tipo=series lê série", () => expect(lerFiltros({ tipo: "series" }).tipo).toBe("serie"));
+  it.each(["SERIES", "serie", "filmes", "", "tv", "series "])("tipo %s vira filme", (t) =>
+    expect(lerFiltros({ tipo: t }).tipo).toBe("filme"));
+  it("tipo repetido usa o primeiro", () => expect(lerFiltros({ tipo: ["series", "x"] }).tipo).toBe("serie"));
+});
+
+describe("montarHref com tipo", () => {
+  const base = { tipo: "filme" as const, streaming: null, busca: null, nota: null, pagina: 1, lista: null };
+  it("trocar para séries volta à página 1 e mantém streaming e nota", () =>
+    expect(montarHref({ ...base, streaming: 8, nota: 8, pagina: 3 }, { tipo: "serie" })).toBe("/?tipo=series&streaming=8&nota=8"));
+  it("filme não aparece na URL", () => expect(montarHref({ ...base, tipo: "serie", pagina: 2 }, { tipo: "filme" })).toBe("/"));
+  it("página seguinte em séries mantém o tipo", () =>
+    expect(montarHref({ ...base, tipo: "serie" }, { pagina: 2 })).toBe("/?tipo=series&pagina=2"));
+  it("trocar de streaming em séries mantém o tipo", () =>
+    expect(montarHref({ ...base, tipo: "serie", pagina: 4 }, { streaming: 337 })).toBe("/?tipo=series&streaming=337"));
+});
+
+describe("hrefDoCatalogo", () => {
+  it("filmes na raiz", () => expect(hrefDoCatalogo("filme")).toBe("/"));
+  it("séries com tipo=series", () => expect(hrefDoCatalogo("serie")).toBe("/?tipo=series"));
 });
 
 describe("hrefDaLista", () => {
@@ -41,7 +61,7 @@ describe("lerIdFilme", () => {
 });
 
 describe("montarHref", () => {
-  const atual = { streaming: 8, busca: "duna", nota: null, pagina: 3, lista: null };
+  const atual = { tipo: "filme" as const, streaming: 8, busca: "duna", nota: null, pagina: 3, lista: null };
   it("trocar de streaming volta para a página 1 e mantém a busca", () =>
     expect(montarHref(atual, { streaming: 337 })).toBe("/?streaming=337&busca=duna"));
   it("nova busca volta para a página 1 e mantém o streaming", () =>
@@ -51,9 +71,9 @@ describe("montarHref", () => {
   it("'Todos' remove o streaming e volta para a página 1", () =>
     expect(montarHref(atual, { streaming: null })).toBe("/?busca=duna"));
   it("omite os valores padrão", () =>
-    expect(montarHref({ streaming: null, busca: null, nota: null, pagina: 1, lista: null }, {})).toBe("/"));
+    expect(montarHref({ tipo: "filme", streaming: null, busca: null, nota: null, pagina: 1, lista: null }, {})).toBe("/"));
   it("codifica a busca", () =>
-    expect(montarHref({ streaming: null, busca: null, nota: null, pagina: 1, lista: null }, { busca: "Tom & Jerry" }))
+    expect(montarHref({ tipo: "filme", streaming: null, busca: null, nota: null, pagina: 1, lista: null }, { busca: "Tom & Jerry" }))
       .toBe("/?busca=Tom+%26+Jerry"));
   it("escolher uma nota volta para a página 1 e mantém o resto", () =>
     expect(montarHref(atual, { nota: 8 })).toBe("/?streaming=8&busca=duna&nota=8"));
