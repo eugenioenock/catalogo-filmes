@@ -15,7 +15,10 @@ Site: https://catalogo-filmes-chi-navy.vercel.app
 
 ## 3. Detalhes pequenos
 
-- (nada pendente)
+Comando de versão (da revisão final; nenhum afeta o site):
+- [ ] Recusar versões malformadas ("1.0", "1.0.0-beta") em vez de gerar "1.0.NaN".
+- [ ] Aceitar "feat!:" e "Feat:" (hoje somem sem aviso) e tirar itens repetidos.
+- [ ] Mensagem melhor quando faltam as tags (clone raso) e aviso ao rodar fora do `main`.
 
 ## 4. Próximas etapas (ideias das specs; cada uma começa com um brainstorming)
 
