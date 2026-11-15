@@ -11,6 +11,9 @@ import {
   imagemUrl,
   listarStreamings,
   listarTitulos,
+  nomesDosGeneros,
+  recomendacoesDe,
+  streamingsDoTitulo,
   tmdbGet,
 } from "./tmdb";
 
@@ -431,6 +434,7 @@ describe("tmdb", () => {
       titulo: "T",
       duracaoMin: 135,
       generos: ["Ação"],
+      generoIds: [28],
       streamings: [{ id: 8, nome: "Netflix", logoUrl: "https://image.tmdb.org/t/p/w92/n.png" }],
     });
   });
@@ -456,6 +460,7 @@ describe("tmdb", () => {
       temporadas: 8,
       terminou: true,
       generos: ["Ficção científica e Fantasia"],
+      generoIds: [10765],
       streamings: [{ id: 1899, nome: "Max" }],
     });
   });
@@ -485,5 +490,61 @@ describe("tmdb", () => {
   it("detalharFilme repassa 404 como FilmeNaoEncontradoError", async () => {
     rotear({ "/movie/999?": responder({}, 404) });
     await expect(detalharFilme(999)).rejects.toBeInstanceOf(FilmeNaoEncontradoError);
+  });
+
+  describe("dados do Para você", () => {
+    it("recomendacoesDe de série chama /tv/{id}/recommendations e devolve candidatos com votos", async () => {
+      rotear({
+        "/genre/tv/list": generosTv,
+        "/tv/1399/recommendations": { page: 1, total_pages: 2, results: [{ ...serie(1), media_type: "tv" }] },
+      });
+      const r = await recomendacoesDe("serie", 1399);
+      const p = new URL(urlChamada("/tv/1399/recommendations")).searchParams;
+      expect([p.get("language"), p.get("page")]).toEqual(["pt-BR", "1"]);
+      expect(r).toEqual([
+        {
+          titulo: expect.objectContaining({ tipo: "serie", id: 1, titulo: "Série 1", generos: ["Ficção científica e Fantasia"] }),
+          votos: 900,
+        },
+      ]);
+    });
+    it("recomendacoesDe de filme chama /movie/{id}/recommendations", async () => {
+      rotear({
+        "/genre/movie/list": generos,
+        "/movie/27205/recommendations": { page: 1, total_pages: 1, results: [filme(3)] },
+      });
+      const r = await recomendacoesDe("filme", 27205);
+      expect(r[0]).toMatchObject({ titulo: { tipo: "filme", id: 3, generos: ["Ação"] }, votos: 500 });
+    });
+    it("streamingsDoTitulo usa o caminho do tipo e só BR flatrate", async () => {
+      rotear({
+        "/tv/5/watch/providers": { results: { BR: { flatrate: [provider(8, "Netflix")], rent: [provider(2)] } } },
+        "/movie/6/watch/providers": { results: { US: { flatrate: [provider(8)] } } },
+      });
+      expect(await streamingsDoTitulo("serie", 5)).toEqual([
+        { id: 8, nome: "Netflix", logoUrl: "https://image.tmdb.org/t/p/w92/l.png" },
+      ]);
+      expect(await streamingsDoTitulo("filme", 6)).toEqual([]);
+    });
+    it("listarTitulos com gêneros envia with_genres com OU e 200 votos mesmo sem nota", async () => {
+      rotear({ "/genre/movie/list": generos, "/discover/movie": { page: 1, total_pages: 1, results: [] } });
+      await listarTitulos({ tipo: "filme", generos: [878, 18], streaming: null, nota: null, pagina: 1 });
+      const p = new URL(urlChamada("/discover/movie")).searchParams;
+      expect(p.get("with_genres")).toBe("878|18");
+      expect(p.get("vote_count.gte")).toBe("200");
+      expect(p.has("vote_average.gte")).toBe(false);
+    });
+    it("listarTitulos com lista de gêneros vazia não envia with_genres", async () => {
+      rotear({ "/genre/movie/list": generos, "/discover/movie": { page: 1, total_pages: 1, results: [] } });
+      await listarTitulos({ tipo: "filme", generos: [], streaming: null, nota: null, pagina: 1 });
+      const p = new URL(urlChamada("/discover/movie")).searchParams;
+      expect(p.has("with_genres")).toBe(false);
+      expect(p.has("vote_count.gte")).toBe(false);
+    });
+    it("nomesDosGeneros devolve id → nome do tipo, já traduzido", async () => {
+      rotear({ "/genre/tv/list": { genres: [{ id: 10765, name: "Sci-Fi & Fantasy" }, { id: 18, name: "Drama" }] } });
+      const nomes = await nomesDosGeneros("serie");
+      expect([nomes.get(10765), nomes.get(18)]).toEqual(["Ficção científica e Fantasia", "Drama"]);
+    });
   });
 });

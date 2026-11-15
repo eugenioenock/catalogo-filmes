@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { anoDe } from "./formatar";
 import type { Tipo } from "./listas";
+import type { Candidato } from "./recomendacoes";
 
 const API = "https://api.themoviedb.org/3";
 const IMAGENS = "https://image.tmdb.org/t/p";
@@ -94,12 +95,13 @@ export type FilmeResumo = {
   generos: string[];
 };
 export type PaginaDeFilmes = { filmes: FilmeResumo[]; pagina: number; totalPaginas: number };
-export type FilmeDetalhe = FilmeResumo & { duracaoMin: number | null; streamings: Streaming[] };
+export type FilmeDetalhe = FilmeResumo & { duracaoMin: number | null; generoIds: number[]; streamings: Streaming[] };
 export type SerieDetalhe = FilmeResumo & {
   temporadas: number | null;
   anoFim: string | null;
   /** Encerrada ou cancelada: a série não terá mais temporadas. */
   terminou: boolean;
+  generoIds: number[];
   streamings: Streaming[];
 };
 
@@ -162,8 +164,8 @@ function nomeDoGenero(tipo: Tipo, g: { id: number; name: string }): string {
   return (tipo === "serie" && GENEROS_DE_SERIE_EM_PORTUGUES[g.id]) || g.name;
 }
 
-/** id do gênero → nome, para um tipo. */
-async function generosDe(tipo: Tipo): Promise<Map<number, string>> {
+/** id do gênero → nome, para um tipo (os de série já traduzidos). */
+export async function nomesDosGeneros(tipo: Tipo): Promise<Map<number, string>> {
   const { genres } = await tmdbGet<{ genres: { id: number; name: string }[] }>(
     `/genre/${CAMINHO[tipo]}/list`,
     { language: "pt-BR" },
@@ -171,7 +173,7 @@ async function generosDe(tipo: Tipo): Promise<Map<number, string>> {
   return new Map(genres.map((g) => [g.id, nomeDoGenero(tipo, g)]));
 }
 
-function nomesDosGeneros(ids: number[], nomes: Map<number, string>): string[] {
+function nomesDosIds(ids: number[], nomes: Map<number, string>): string[] {
   return ids.flatMap((id) => nomes.get(id) ?? []);
 }
 
@@ -180,6 +182,8 @@ export async function listarTitulos(o: {
   streaming: number | null;
   nota: number | null;
   pagina: number;
+  /** Só títulos destes gêneros (qualquer um deles). Usado pela reserva do "Para você". */
+  generos?: number[];
 }): Promise<PaginaDeFilmes> {
   const params: Record<string, string> = {
     watch_region: "BR",
@@ -193,12 +197,17 @@ export async function listarTitulos(o: {
     params["vote_average.gte"] = String(o.nota);
     params["vote_count.gte"] = String(VOTOS_MINIMOS);
   }
+  if (o.generos && o.generos.length > 0) {
+    // "|" é OU no TMDB. Os votos mínimos evitam títulos obscuros mesmo sem filtro de nota.
+    params.with_genres = o.generos.join("|");
+    params["vote_count.gte"] = String(VOTOS_MINIMOS);
+  }
   const [dados, nomes] = await Promise.all([
     tmdbGet<TmdbPagina>(`/discover/${CAMINHO[o.tipo]}`, params),
-    generosDe(o.tipo),
+    nomesDosGeneros(o.tipo),
   ]);
   return {
-    filmes: dados.results.map((f) => resumir(o.tipo, f, nomesDosGeneros(f.genre_ids, nomes))),
+    filmes: dados.results.map((f) => resumir(o.tipo, f, nomesDosIds(f.genre_ids, nomes))),
     pagina: dados.page,
     totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS),
   };
@@ -216,8 +225,8 @@ export async function buscarTitulos(o: {
       "/search/multi",
       { query: o.texto, language: "pt-BR", page: String(o.pagina) },
     ),
-    generosDe("filme"),
-    generosDe("serie"),
+    nomesDosGeneros("filme"),
+    nomesDosGeneros("serie"),
   ]);
   const { nota } = o;
   // Pessoas também aparecem na busca do TMDB: ficam só filmes (movie) e séries (tv).
@@ -240,7 +249,7 @@ export async function buscarTitulos(o: {
         : streamings.some((s) => s.id === o.streaming);
     })
     .map(({ tipo, f }) =>
-      resumir(tipo, f, nomesDosGeneros(f.genre_ids ?? [], tipo === "filme" ? generosFilme : generosSerie)),
+      resumir(tipo, f, nomesDosIds(f.genre_ids ?? [], tipo === "filme" ? generosFilme : generosSerie)),
     );
   return { filmes, pagina: dados.page, totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS) };
 }
@@ -260,6 +269,7 @@ export const detalharFilme = cache(async (id: number): Promise<FilmeDetalhe> => 
       d.genres.map((g) => g.name),
     ),
     duracaoMin: d.runtime || null,
+    generoIds: d.genres.map((g) => g.id),
     streamings: streamingsDe(d["watch/providers"]),
   };
 });
@@ -283,6 +293,24 @@ export const detalharSerie = cache(async (id: number): Promise<SerieDetalhe> => 
     temporadas: d.number_of_seasons ?? null,
     anoFim: anoDe(d.last_air_date),
     terminou: d.status === "Ended" || d.status === "Canceled",
+    generoIds: d.genres.map((g) => g.id),
     streamings: streamingsDe(d["watch/providers"]),
   };
 });
+
+/** "Quem gostou disto também gostou de…" do TMDB para um título (página 1). */
+export async function recomendacoesDe(tipo: Tipo, id: number): Promise<Candidato[]> {
+  const [dados, nomes] = await Promise.all([
+    tmdbGet<TmdbPagina>(`/${CAMINHO[tipo]}/${id}/recommendations`, { language: "pt-BR", page: "1" }),
+    nomesDosGeneros(tipo),
+  ]);
+  return dados.results.map((f) => ({
+    titulo: resumir(tipo, f, nomesDosIds(f.genre_ids ?? [], nomes)),
+    votos: f.vote_count,
+  }));
+}
+
+/** Os streamings por assinatura no Brasil onde o título está. */
+export async function streamingsDoTitulo(tipo: Tipo, id: number): Promise<Streaming[]> {
+  return streamingsDe(await tmdbGet<TmdbProvidersBR>(`/${CAMINHO[tipo]}/${id}/watch/providers`));
+}

@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { linhaParaFilme, type LinhaMarcacao, type Situacao, type Tipo } from "./listas";
+import type { Marca } from "./recomendacoes";
 import { criarClienteServidor } from "./supabase/servidor";
 import type { FilmeResumo } from "./tmdb";
 import { usuarioAtual } from "./usuario";
@@ -89,4 +90,22 @@ export async function gravarSituacao(filme: FilmeResumo, situacao: Situacao | nu
           { onConflict: "user_id,tipo,filme_id" },
         );
   if (error) throw erroDoSupabase("gravarSituacao", error.message);
+}
+
+/**
+ * Todas as marcações de quem está logado (são poucas), da mais recente para a mais antiga.
+ * Usada pelo "Para você": todas entram na exclusão; as mais recentes viram sementes e perfil.
+ */
+export async function listarTodasMarcacoes(): Promise<Marca[]> {
+  const { data, error } = await (await cliente())
+    .from("marcacoes")
+    .select("tipo, filme_id, situacao, titulo")
+    .order("marcado_em", { ascending: false });
+  if (error) throw erroDoSupabase("listarTodasMarcacoes", error.message);
+  return (data as { tipo: Tipo; filme_id: number; situacao: Situacao; titulo: string }[]).map((l) => ({
+    tipo: l.tipo,
+    id: l.filme_id,
+    situacao: l.situacao,
+    titulo: l.titulo,
+  }));
 }

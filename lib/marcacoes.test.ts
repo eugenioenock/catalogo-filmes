@@ -9,6 +9,8 @@ vi.mock("./usuario", () => ({ usuarioAtual: async () => ({ id: "u1", email: "", 
 const chamadas: unknown[][] = [];
 // Quando preenchido, a próxima consulta devolve este erro do Supabase.
 let erroDoBanco: { message: string } | null = null;
+// O que a próxima consulta devolve em data (null por padrão).
+let dadosDoBanco: unknown = null;
 function consulta(): Record<string, unknown> {
   const q: Record<string, unknown> = {};
   for (const metodo of ["from", "select", "eq", "delete", "upsert", "order"]) {
@@ -22,8 +24,8 @@ function consulta(): Record<string, unknown> {
     return { data: null, error: erroDoBanco };
   };
   // "await" na consulta devolve o resultado, como o cliente de verdade.
-  q.then = (resolver: (r: { data: null; error: { message: string } | null }) => unknown) =>
-    resolver({ data: null, error: erroDoBanco });
+  q.then = (resolver: (r: { data: unknown; error: { message: string } | null }) => unknown) =>
+    resolver({ data: dadosDoBanco, error: erroDoBanco });
   return q;
 }
 // O cliente em si não pode ser "await-ável" (o await de criarClienteServidor o desembrulharia):
@@ -37,7 +39,7 @@ vi.mock("./supabase/servidor", () => ({
   }),
 }));
 
-import { gravarSituacao, MarcacoesIndisponiveisError, situacaoDoTitulo } from "./marcacoes";
+import { gravarSituacao, listarTodasMarcacoes, MarcacoesIndisponiveisError, situacaoDoTitulo } from "./marcacoes";
 
 const got: FilmeResumo = {
   tipo: "serie",
@@ -95,5 +97,37 @@ describe("erro do Supabase", () => {
     const registro = vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(gravarSituacao(got, "assistindo")).rejects.toBeInstanceOf(MarcacoesIndisponiveisError);
     expect(registro).toHaveBeenCalledWith(expect.stringContaining("TypeError: fetch failed"));
+  });
+});
+
+describe("listarTodasMarcacoes", () => {
+  beforeEach(() => {
+    chamadas.length = 0;
+    erroDoBanco = null;
+  });
+  afterEach(() => {
+    dadosDoBanco = null;
+  });
+
+  it("lê todas, da mais recente para a mais antiga, e troca filme_id por id", async () => {
+    dadosDoBanco = [
+      { tipo: "serie", filme_id: 1399, situacao: "assistindo", titulo: "Game of Thrones" },
+      { tipo: "filme", filme_id: 27205, situacao: "ja_assisti", titulo: "A Origem" },
+    ];
+    expect(await listarTodasMarcacoes()).toEqual([
+      { tipo: "serie", id: 1399, situacao: "assistindo", titulo: "Game of Thrones" },
+      { tipo: "filme", id: 27205, situacao: "ja_assisti", titulo: "A Origem" },
+    ]);
+    expect(chamadas).toContainEqual(["select", "tipo, filme_id, situacao, titulo"]);
+    expect(chamadas).toContainEqual(["order", "marcado_em", { ascending: false }]);
+    expect(chamadas.some(([m]) => m === "limit")).toBe(false);
+  });
+  it("erro do Supabase é registrado e vira MarcacoesIndisponiveisError", async () => {
+    erroDoBanco = { message: "falhou" };
+    const registro = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(listarTodasMarcacoes()).rejects.toBeInstanceOf(MarcacoesIndisponiveisError);
+    expect(registro).toHaveBeenCalledWith(expect.stringContaining("listarTodasMarcacoes"));
+    registro.mockRestore();
+    erroDoBanco = null;
   });
 });
