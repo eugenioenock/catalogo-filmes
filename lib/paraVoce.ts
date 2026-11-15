@@ -91,10 +91,11 @@ async function reservaPorGenero(
   const novos = pagina.filmes.filter((t) => !jaUsados.has(chaveDoTitulo(t))).map((titulo) => ({ titulo }));
   const disponiveis = await comStreaming(novos, o.streaming);
 
+  // Os nomes dos gêneros do perfil, do mais forte ao mais fraco: os mesmos para todos os cartões.
+  const nomesDoPerfil = perfil.map((id) => nomes.get(id)).filter((n): n is string => Boolean(n));
   return disponiveis.slice(0, vagas).map(({ titulo, streaming }) => {
     // O gênero do perfil que o título tem; se o TMDB não trouxe nenhum, o mais forte do perfil.
-    const nomeDoPerfil = perfil.map((id) => nomes.get(id)).filter((n): n is string => Boolean(n));
-    const nome = nomeDoPerfil.find((n) => titulo.generos.includes(n)) ?? nomeDoPerfil[0];
+    const nome = nomesDoPerfil.find((n) => titulo.generos.includes(n)) ?? nomesDoPerfil[0];
     return { titulo, streaming, motivo: textoDoMotivo({ tipo: "genero", nome: nome ?? "títulos parecidos" }) };
   });
 }
