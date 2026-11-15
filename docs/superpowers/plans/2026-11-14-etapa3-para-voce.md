@@ -178,8 +178,8 @@ git commit -m "feat: regras das recomendações Para você" -- lib/recomendacoes
   - `FilmeDetalhe` e `SerieDetalhe` ganham `generoIds: number[]` (de `genres[].id`).
   - `nomesDosGeneros(tipo: Tipo): Promise<Map<number, string>>` → exporta o `generosDe` atual, que já traduz os gêneros de série.
 - Produces (`lib/marcacoes.ts`):
-  - `listarTodasMarcacoes(limite: number): Promise<Marca[]>`.
-    - `select("tipo, filme_id, situacao, titulo")`, `order("marcado_em", { ascending: false })`, `limit(limite)`.
+  - `listarTodasMarcacoes(): Promise<Marca[]>`, com **todas** as marcações de quem está logado (são poucas).
+    - `select("tipo, filme_id, situacao, titulo")`, `order("marcado_em", { ascending: false })`, sem limite: todas entram na exclusão, e só o perfil de gêneros usa as 20 mais recentes.
     - Converte `filme_id` em `id`.
     - O erro passa por `erroDoSupabase("listarTodasMarcacoes", …)`.
 
@@ -191,7 +191,7 @@ git commit -m "feat: regras das recomendações Para você" -- lib/recomendacoes
     - `listarTitulos({ tipo: "filme", generos: [878, 18], streaming: null, nota: null, pagina: 1 })` envia `with_genres=878|18` e `vote_count.gte=200`.
     - Os testes de `detalharFilme` e `detalharSerie` passam a esperar `generoIds` (`[28]` e `[10765]`).
   - **Em `lib/marcacoes.test.ts`** (o cliente falso ganha o método `limit`):
-    - `listarTodasMarcacoes(20)` chama `order("marcado_em", { ascending: false })` e `limit(20)`.
+    - `listarTodasMarcacoes()` chama `order("marcado_em", { ascending: false })`.
     - O retorno converte `filme_id` em `id`. Para isso, o falso precisa de uma variável `dadosDoBanco` que o `then` devolve.
 
 - [ ] **Step 2: Rodar e ver falhar.** `npx vitest run lib/tmdb.test.ts lib/marcacoes.test.ts` → FAIL.
@@ -220,7 +220,7 @@ git commit -m "feat: dados do TMDB e das marcações para o Para você" -- lib/t
   - `montarParaVoce(o: { tipo: Tipo; streaming: number | null; nota: number | null }): Promise<Recomendacao[]>`. O algoritmo:
 
 ```
-marcas = listarTodasMarcacoes(MARCAS_DO_PERFIL)         // se vazio → []
+marcas = listarTodasMarcacoes()                          // todas; se vazio → []
 marcadas = Set(chaveDoTitulo(m) de todas as marcas)
 sementes = escolherSementes(marcas, tipo)
 porSemente = para cada semente, recomendacoesDe(tipo, id) com Promise.allSettled (falha → semente sem candidatos)
@@ -229,7 +229,7 @@ onde = streamingsDoTitulo para cada pontuado (allSettled; falha → descarta)
 fica quem tem streaming (com filtro ativo: quem tem aquele streaming, e o logo é o dele; senão, o primeiro)
 fileira = até MAX_CARTOES, motivo = textoDoMotivo({ tipo: "semente", situacao: semente.situacao, titulo: semente.titulo })
 se fileira.length < MINIMO_ANTES_DA_RESERVA:
-  detalhes = detalharFilme/detalharSerie de cada marca (allSettled; falha → ignora)
+  detalhes = detalharFilme/detalharSerie das primeiras MARCAS_DO_PERFIL marcas (allSettled; falha → ignora)
   perfil = perfilDeGeneros(detalhes com peso da situação, tipo)
   se perfil não vazio:
     nomes = nomesDosGeneros(tipo)
@@ -242,6 +242,7 @@ se fileira.length < MINIMO_ANTES_DA_RESERVA:
   - Mocke `server-only`, `./marcacoes` (`listarTodasMarcacoes`) e `./tmdb` (as cinco funções), com `vi.hoisted`, como em `app/marcacoes/acoes.test.ts`.
   - Os testes:
     - **"sem marcações, devolve vazio e não chama o TMDB".**
+    - **"uma marcação antiga, além das 20 mais recentes, nunca é recomendada".** São 25 marcas, e a 25ª, a mais antiga, aparece entre os candidatos: ela não entra.
     - **"recomenda a partir das sementes, com motivo e logo".** Uma marca série 1399 Assistindo, recomendações `[c(10), c(11)]`, os dois na Netflix → `[{ titulo.id: 10, motivo: "Porque você está assistindo Game of Thrones", streaming.id: 8 }, …]`.
     - **"tira quem não está em streaming".**
     - **"com filtro de streaming, só quem está nele, e o logo é o dele".** O candidato está em `[8, 337]`, o filtro é 337 → o logo é 337. O candidato em `[8]` sai.
