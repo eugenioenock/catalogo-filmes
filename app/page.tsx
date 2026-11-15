@@ -11,7 +11,7 @@ import LuzAmbiente from "@/components/LuzAmbiente";
 import Paginacao from "@/components/Paginacao";
 import { mensagemSemFilmes } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
-import { buscarFilmes, listarFilmes, listarStreamings } from "@/lib/tmdb";
+import { buscarTitulos, listarStreamings, listarTitulos } from "@/lib/tmdb";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -37,8 +37,8 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
   const [streamings, resultado] = await Promise.all([
     listarStreamings(),
     busca
-      ? buscarFilmes({ texto: busca, streaming, nota, pagina })
-      : listarFilmes({ streaming, nota, pagina }),
+      ? buscarTitulos({ texto: busca, streaming, nota, pagina })
+      : listarTitulos({ tipo: "filme", streaming, nota, pagina }),
   ]);
   const { filmes, totalPaginas } = resultado;
 

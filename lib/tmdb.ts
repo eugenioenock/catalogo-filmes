@@ -95,30 +95,46 @@ export type FilmeResumo = {
 };
 export type PaginaDeFilmes = { filmes: FilmeResumo[]; pagina: number; totalPaginas: number };
 export type FilmeDetalhe = FilmeResumo & { duracaoMin: number | null; streamings: Streaming[] };
+export type SerieDetalhe = FilmeResumo & {
+  temporadas: number | null;
+  anoFim: string | null;
+  /** Encerrada ou cancelada: a série não terá mais temporadas. */
+  terminou: boolean;
+  streamings: Streaming[];
+};
 
-type TmdbFilme = {
+/** Um filme ou uma série como vêm do TMDB: filme tem title/release_date; série, name/first_air_date. */
+type TmdbTitulo = {
   id: number;
-  title: string;
+  title?: string;
   release_date?: string | null;
+  name?: string;
+  first_air_date?: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
   overview?: string | null;
   vote_average: number;
   vote_count: number;
 };
-type TmdbPagina = { page: number; total_pages: number; results: (TmdbFilme & { genre_ids: number[] })[] };
+type TmdbFilme = TmdbTitulo & { title: string };
+type TmdbItem = TmdbTitulo & { genre_ids: number[] };
+type TmdbPagina = { page: number; total_pages: number; results: TmdbItem[] };
 type TmdbProvidersBR = { results?: { BR?: { flatrate?: TmdbProvider[] } } };
 
+/** O caminho de cada tipo na API do TMDB. */
+const CAMINHO: Record<Tipo, "movie" | "tv"> = { filme: "movie", serie: "tv" };
+
 const MAX_PAGINAS = 500;
-// Com o filtro de nota ativo, evita filmes com nota alta dada por poucas pessoas.
+// Com o filtro de nota ativo, evita títulos com nota alta dada por poucas pessoas.
 const VOTOS_MINIMOS = 200;
 
-function resumir(f: TmdbFilme, generos: string[]): FilmeResumo {
+/** A conversão do formato do TMDB para o resumo do site, para filmes e séries. */
+function resumir(tipo: Tipo, f: TmdbTitulo, generos: string[]): FilmeResumo {
   return {
-    tipo: "filme",
+    tipo,
     id: f.id,
-    titulo: f.title,
-    ano: anoDe(f.release_date),
+    titulo: (tipo === "filme" ? f.title : f.name) ?? "",
+    ano: anoDe(tipo === "filme" ? f.release_date : f.first_air_date),
     posterUrl: imagemUrl(f.poster_path, "w342"),
     backdropUrl: imagemUrl(f.backdrop_path, "w1280"),
     sinopse: f.overview ?? "",
@@ -135,25 +151,21 @@ function streamingsDe(dados: TmdbProvidersBR | undefined): Streaming[] {
   }));
 }
 
-async function montarPagina(dados: TmdbPagina): Promise<PaginaDeFilmes> {
+/** id do gênero → nome, para um tipo. */
+async function generosDe(tipo: Tipo): Promise<Map<number, string>> {
   const { genres } = await tmdbGet<{ genres: { id: number; name: string }[] }>(
-    "/genre/movie/list",
+    `/genre/${CAMINHO[tipo]}/list`,
     { language: "pt-BR" },
   );
-  const nomes = new Map(genres.map((g) => [g.id, g.name]));
-  return {
-    filmes: dados.results.map((f) =>
-      resumir(
-        f,
-        f.genre_ids.flatMap((id) => nomes.get(id) ?? []),
-      ),
-    ),
-    pagina: dados.page,
-    totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS),
-  };
+  return new Map(genres.map((g) => [g.id, g.name]));
 }
 
-export async function listarFilmes(o: {
+function nomesDosGeneros(ids: number[], nomes: Map<number, string>): string[] {
+  return ids.flatMap((id) => nomes.get(id) ?? []);
+}
+
+export async function listarTitulos(o: {
+  tipo: Tipo;
   streaming: number | null;
   nota: number | null;
   pagina: number;
@@ -170,37 +182,56 @@ export async function listarFilmes(o: {
     params["vote_average.gte"] = String(o.nota);
     params["vote_count.gte"] = String(VOTOS_MINIMOS);
   }
-  return montarPagina(await tmdbGet<TmdbPagina>("/discover/movie", params));
+  const [dados, nomes] = await Promise.all([
+    tmdbGet<TmdbPagina>(`/discover/${CAMINHO[o.tipo]}`, params),
+    generosDe(o.tipo),
+  ]);
+  return {
+    filmes: dados.results.map((f) => resumir(o.tipo, f, nomesDosGeneros(f.genre_ids, nomes))),
+    pagina: dados.page,
+    totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS),
+  };
 }
 
-export async function buscarFilmes(o: {
+/** Busca por texto: filmes e séries juntos, na ordem do TMDB, só o que está em algum streaming. */
+export async function buscarTitulos(o: {
   texto: string;
   streaming: number | null;
   nota: number | null;
   pagina: number;
 }): Promise<PaginaDeFilmes> {
-  const dados = await tmdbGet<TmdbPagina>("/search/movie", {
-    query: o.texto,
-    language: "pt-BR",
-    page: String(o.pagina),
-  });
+  const [dados, generosFilme, generosSerie] = await Promise.all([
+    tmdbGet<{ page: number; total_pages: number; results: (TmdbItem & { media_type: string })[] }>(
+      "/search/multi",
+      { query: o.texto, language: "pt-BR", page: String(o.pagina) },
+    ),
+    generosDe("filme"),
+    generosDe("serie"),
+  ]);
   const { nota } = o;
-  const candidatos =
-    nota === null
-      ? dados.results
-      : dados.results.filter((f) => f.vote_average >= nota && f.vote_count >= VOTOS_MINIMOS);
-  const disponibilidade = await Promise.allSettled(
-    candidatos.map((f) => tmdbGet<TmdbProvidersBR>(`/movie/${f.id}/watch/providers`)),
-  );
-  const results = candidatos.filter((_, i) => {
-    const d = disponibilidade[i];
-    if (d.status === "rejected") return false;
-    const streamings = streamingsDe(d.value);
-    return o.streaming === null
-      ? streamings.length > 0
-      : streamings.some((s) => s.id === o.streaming);
+  // Pessoas também aparecem na busca do TMDB: ficam só filmes (movie) e séries (tv).
+  const candidatos = dados.results.flatMap((f) => {
+    const tipo: Tipo | null = f.media_type === "movie" ? "filme" : f.media_type === "tv" ? "serie" : null;
+    if (tipo === null) return [];
+    if (nota !== null && !(f.vote_average >= nota && f.vote_count >= VOTOS_MINIMOS)) return [];
+    return [{ tipo, f }];
   });
-  return montarPagina({ ...dados, results });
+  const disponibilidade = await Promise.allSettled(
+    candidatos.map(({ tipo, f }) => tmdbGet<TmdbProvidersBR>(`/${CAMINHO[tipo]}/${f.id}/watch/providers`)),
+  );
+  const filmes = candidatos
+    .filter((_, i) => {
+      const d = disponibilidade[i];
+      if (d.status === "rejected") return false;
+      const streamings = streamingsDe(d.value);
+      return o.streaming === null
+        ? streamings.length > 0
+        : streamings.some((s) => s.id === o.streaming);
+    })
+    .map(({ tipo, f }) =>
+      resumir(tipo, f, nomesDosGeneros(f.genre_ids ?? [], tipo === "filme" ? generosFilme : generosSerie)),
+    );
+  return { filmes, pagina: dados.page, totalPaginas: Math.min(dados.total_pages, MAX_PAGINAS) };
 }
 
 export const detalharFilme = cache(async (id: number): Promise<FilmeDetalhe> => {
@@ -213,10 +244,34 @@ export const detalharFilme = cache(async (id: number): Promise<FilmeDetalhe> => 
   >(`/movie/${id}`, { language: "pt-BR", append_to_response: "watch/providers" });
   return {
     ...resumir(
+      "filme",
       d,
       d.genres.map((g) => g.name),
     ),
     duracaoMin: d.runtime || null,
+    streamings: streamingsDe(d["watch/providers"]),
+  };
+});
+
+export const detalharSerie = cache(async (id: number): Promise<SerieDetalhe> => {
+  const d = await tmdbGet<
+    TmdbTitulo & {
+      number_of_seasons?: number | null;
+      last_air_date?: string | null;
+      status?: string;
+      genres: { id: number; name: string }[];
+      "watch/providers"?: TmdbProvidersBR;
+    }
+  >(`/tv/${id}`, { language: "pt-BR", append_to_response: "watch/providers" });
+  return {
+    ...resumir(
+      "serie",
+      d,
+      d.genres.map((g) => g.name),
+    ),
+    temporadas: d.number_of_seasons ?? null,
+    anoFim: anoDe(d.last_air_date),
+    terminou: d.status === "Ended" || d.status === "Canceled",
     streamings: streamingsDe(d["watch/providers"]),
   };
 });
