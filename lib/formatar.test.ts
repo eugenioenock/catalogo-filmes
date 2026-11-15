@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { anoDe, formatarDuracao, formatarNota, mensagemSemFilmes, textoTemporadas, titulosDoCatalogo } from "./formatar";
+import { anoDe, formatarDataBR, formatarDuracao, formatarNota, mensagemSemFilmes, textoTemporadas, titulosDoCatalogo } from "./formatar";
 
 describe("formatarDuracao", () => {
   it("135 vira 2h 15min", () => expect(formatarDuracao(135)).toBe("2h 15min"));
@@ -84,4 +84,9 @@ describe("titulosDoCatalogo", () => {
     expect(titulosDoCatalogo("filme", { busca: null, vitrine: false }).grade).toBe("Filmes nos streamings");
   });
   it("busca", () => expect(titulosDoCatalogo("serie", { busca: "dark", vitrine: false }).grade).toBe("Resultados para “dark”"));
+});
+
+describe("formatarDataBR", () => {
+  // Montada a partir do texto: new Date("2026-11-14") é meia-noite UTC, que no Brasil ainda é dia 13.
+  it("2026-11-14 vira 14/11/2026", () => expect(formatarDataBR("2026-11-14")).toBe("14/11/2026"));
 });

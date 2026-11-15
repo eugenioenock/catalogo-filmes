@@ -13,6 +13,12 @@ export function formatarNota(nota: number): string {
   return nota.toFixed(1).replace(".", ",");
 }
 
+/** "2026-11-14" → "14/11/2026". Pelo texto, sem new Date: meia-noite UTC ainda é o dia anterior no Brasil. */
+export function formatarDataBR(iso: string): string {
+  const [ano, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
 export function anoDe(data: string | null | undefined): string | null {
   if (!data) return null;
   const ano = data.slice(0, 4);

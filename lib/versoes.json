@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "versao": "1.0.0",
+    "data": "2026-11-14",
+    "novidades": [
+      "Catálogo de filmes e séries dos streamings do Brasil, com Top 10 e destaque",
+      "Filtros por streaming e por nota, e busca de filmes e séries",
+      "Página de cada filme e série com sinopse e onde assistir",
+      "Conta com nome e as listas Quero assistir, Assistindo e Já assisti",
+      "Fileira Para você, com recomendações a partir das suas listas"
+    ],
+    "correcoes": []
+  }
+]
