@@ -14,8 +14,14 @@ const falsos = vi.hoisted(() => ({
   detalharFilme: vi.fn(),
   detalharSerie: vi.fn(),
   nomesDosGeneros: vi.fn(),
+  contarMarcacoes: vi.fn(),
+  usuarioAtual: vi.fn(),
 }));
-vi.mock("./marcacoes", () => ({ listarTodasMarcacoes: falsos.listarTodasMarcacoes }));
+vi.mock("./marcacoes", () => ({
+  listarTodasMarcacoes: falsos.listarTodasMarcacoes,
+  contarMarcacoes: falsos.contarMarcacoes,
+}));
+vi.mock("./usuario", () => ({ usuarioAtual: falsos.usuarioAtual }));
 vi.mock("./tmdb", () => ({
   recomendacoesDe: falsos.recomendacoesDe,
   streamingsDoTitulo: falsos.streamingsDoTitulo,
@@ -25,7 +31,7 @@ vi.mock("./tmdb", () => ({
   nomesDosGeneros: falsos.nomesDosGeneros,
 }));
 
-import { montarParaVoce } from "./paraVoce";
+import { fileiraPodeAparecer, montarParaVoce } from "./paraVoce";
 
 const NETFLIX: Streaming = { id: 8, nome: "Netflix", logoUrl: "n.png" };
 const PRIME: Streaming = { id: 119, nome: "Prime Video", logoUrl: "p.png" };
@@ -192,5 +198,42 @@ describe("montarParaVoce", () => {
     falsos.recomendacoesDe.mockResolvedValue([c(125, "serie"), c(200, "serie")]);
     const r = await montarParaVoce({ tipo: "serie", ...sem });
     expect(r.map((x) => x.titulo.id)).toEqual([200]);
+  });
+});
+
+describe("fileiraPodeAparecer (decide se o Catálogo reserva o lugar da fileira)", () => {
+  const contagem = (quero = 0, assistindo = 0, ja = 0) => ({
+    quero_assistir: quero,
+    assistindo,
+    ja_assisti: ja,
+  });
+  const logado = { id: "u1", email: "", nome: null };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sem login: não, e nem consulta as marcações", async () => {
+    falsos.usuarioAtual.mockResolvedValue(null);
+    expect(await fileiraPodeAparecer()).toBe(false);
+    expect(falsos.contarMarcacoes).not.toHaveBeenCalled();
+  });
+
+  it("logado sem nenhuma marcação: não", async () => {
+    falsos.usuarioAtual.mockResolvedValue(logado);
+    falsos.contarMarcacoes.mockResolvedValue(contagem());
+    expect(await fileiraPodeAparecer()).toBe(false);
+  });
+
+  it("logado com uma marcação em qualquer lista: sim", async () => {
+    falsos.usuarioAtual.mockResolvedValue(logado);
+    falsos.contarMarcacoes.mockResolvedValue(contagem(0, 1, 0));
+    expect(await fileiraPodeAparecer()).toBe(true);
+  });
+
+  it("Supabase com erro: não, sem derrubar o Catálogo", async () => {
+    falsos.usuarioAtual.mockResolvedValue(logado);
+    falsos.contarMarcacoes.mockRejectedValue(new Error("Supabase fora do ar"));
+    expect(await fileiraPodeAparecer()).toBe(false);
   });
 });

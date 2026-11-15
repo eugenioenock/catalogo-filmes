@@ -1,7 +1,7 @@
 import "server-only";
 
 import { chaveDoTitulo, type Tipo } from "./listas";
-import { listarTodasMarcacoes } from "./marcacoes";
+import { contarMarcacoes, listarTodasMarcacoes } from "./marcacoes";
 import {
   CANDIDATOS_CHECADOS,
   MARCAS_DO_PERFIL,
@@ -24,6 +24,22 @@ import {
   type FilmeResumo,
   type Streaming,
 } from "./tmdb";
+import { usuarioAtual } from "./usuario";
+
+/**
+ * Se a fileira pode aparecer: logado e com ao menos 1 marcação. É rápida (as duas leituras
+ * têm cache por requisição e o cabeçalho já as faz), então o Catálogo a espera junto com o
+ * TMDB e já desenha o esqueleto no lugar da fileira, sem o Top 10 descer depois.
+ * Erro do Supabase = não (ele já foi registrado em lib/marcacoes).
+ */
+export async function fileiraPodeAparecer(): Promise<boolean> {
+  if (!(await usuarioAtual())) return false;
+  try {
+    return Object.values(await contarMarcacoes()).some((n) => n > 0);
+  } catch {
+    return false;
+  }
+}
 
 export type Recomendacao = { titulo: FilmeResumo; streaming: Streaming; motivo: string };
 

@@ -13,6 +13,7 @@ import ParaVoce from "@/components/ParaVoce";
 import SeletorTipo from "@/components/SeletorTipo";
 import { mensagemSemFilmes, titulosDoCatalogo } from "@/lib/formatar";
 import { lerFiltros, montarHref } from "@/lib/parametros";
+import { fileiraPodeAparecer } from "@/lib/paraVoce";
 import { buscarTitulos, listarStreamings, listarTitulos } from "@/lib/tmdb";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -36,11 +37,14 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
     );
   }
 
-  const [streamings, resultado] = await Promise.all([
+  // fileiraPodeAparecer vem junto com o TMDB (é rápida): com ela, o lugar da fileira
+  // "Para você" já sai reservado no primeiro desenho da página.
+  const [streamings, resultado, comParaVoce] = await Promise.all([
     listarStreamings(),
     busca
       ? buscarTitulos({ texto: busca, streaming, nota, pagina })
       : listarTitulos({ tipo, streaming, nota, pagina }),
+    pagina === 1 && !busca ? fileiraPodeAparecer() : false,
   ]);
   const { filmes, totalPaginas } = resultado;
 
@@ -70,12 +74,8 @@ async function Catalogo({ searchParams }: { searchParams: SearchParams }) {
           <FiltroNota filtros={filtros} />
         </div>
 
-        {/* Própria fronteira: as recomendações são lentas e não seguram o resto do catálogo. */}
-        {pagina === 1 && !busca && (
-          <Suspense fallback={null}>
-            <ParaVoce tipo={tipo} streaming={streaming} nota={nota} />
-          </Suspense>
-        )}
+        {/* A fileira tem a própria fronteira (com esqueleto): as recomendações são lentas e não seguram o resto. */}
+        {comParaVoce && <ParaVoce tipo={tipo} streaming={streaming} nota={nota} />}
 
         {ranking.length > 0 && <EmAlta filmes={ranking} titulo={titulos.emAlta} />}
 
