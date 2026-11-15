@@ -160,6 +160,18 @@ describe("montarParaVoce", () => {
     ]);
   });
 
+  it("se a reserva falha, os cartões das sementes continuam", async () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    falsos.listarTodasMarcacoes.mockResolvedValue([marca("filme", 27205, "ja_assisti", "A Origem")]);
+    falsos.recomendacoesDe.mockResolvedValue([c(10)]);
+    falsos.detalharFilme.mockResolvedValue({ generoIds: [878] });
+    falsos.listarTitulos.mockRejectedValue(new Error("TMDB fora do ar"));
+    const r = await montarParaVoce({ tipo: "filme", ...sem });
+    expect(r.map((x) => x.titulo.id)).toEqual([10]);
+    expect(erro).toHaveBeenCalledWith("[para você] reserva:", "TMDB fora do ar");
+    erro.mockRestore();
+  });
+
   it("perfil sem gênero convertível: sem reserva", async () => {
     falsos.listarTodasMarcacoes.mockResolvedValue([marca("filme", 1, "ja_assisti")]);
     falsos.detalharFilme.mockResolvedValue({ generoIds: [27] }); // Terror não existe em série

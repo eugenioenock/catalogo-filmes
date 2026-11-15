@@ -111,6 +111,12 @@ export async function montarParaVoce(o: Filtros): Promise<Recomendacao[]> {
   if (fileira.length >= MINIMO_ANTES_DA_RESERVA) return fileira;
 
   const jaUsados = new Set([...marcadas, ...fileira.map((r) => chaveDoTitulo(r.titulo))]);
-  const reserva = await reservaPorGenero(o, marcas, jaUsados, MAX_CARTOES - fileira.length);
-  return [...fileira, ...reserva];
+  // Os cartões das sementes já são bons: perdê-los porque o plano B falhou seria pior para quem usa.
+  try {
+    const reserva = await reservaPorGenero(o, marcas, jaUsados, MAX_CARTOES - fileira.length);
+    return [...fileira, ...reserva];
+  } catch (erro) {
+    console.error("[para você] reserva:", erro instanceof Error ? erro.message : String(erro));
+    return fileira;
+  }
 }
