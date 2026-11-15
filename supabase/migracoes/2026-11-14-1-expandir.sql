@@ -7,6 +7,8 @@
 -- A 2ª vez (2026-11-14-2-contrair.sql) roda só depois que a Etapa 1 estiver publicada.
 --
 -- Pode rodar de novo sem erro: cada passo usa "if exists" / "if not exists".
+-- ATENÇÃO: não rode depois da contração (2026-11-14-2-contrair.sql). O passo 3
+-- recriaria o índice temporário e desfaria a contração.
 
 begin;
 

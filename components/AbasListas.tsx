@@ -5,7 +5,7 @@ import { contarMarcacoes } from "@/lib/marcacoes";
 import { hrefDaLista } from "@/lib/parametros";
 import { usuarioAtual } from "@/lib/usuario";
 
-/** O número de filmes da lista, só para quem está logado. Se der erro, não mostra nada. */
+/** O número de títulos (filmes e séries) da lista, só para quem está logado. Se der erro, não mostra nada. */
 async function Contagem({ lista }: { lista: ListaUrl }) {
   if (!(await usuarioAtual())) return null;
   let total: number;
@@ -23,7 +23,7 @@ function classeAba(ativa: boolean): string {
   }`;
 }
 
-/** Catálogo | Quero assistir | Já assisti, abaixo do nome do site. */
+/** Catálogo | Quero assistir | Assistindo | Já assisti, abaixo do nome do site. */
 export default function AbasListas({ ativa }: { ativa: ListaUrl | null }) {
   return (
     <nav aria-label="Listas" className="flex gap-6 overflow-x-auto [scrollbar-width:none]">
