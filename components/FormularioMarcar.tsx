@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { alternarMarcacao, type EstadoMarcar } from "@/app/filme/[id]/acoes";
-import { NOME_DA_SITUACAO, SITUACOES, type Situacao } from "@/lib/listas";
+import { alternarMarcacao, type EstadoMarcar } from "@/app/marcacoes/acoes";
+import { NOME_DA_SITUACAO, SITUACOES, type Situacao, type Tipo } from "@/lib/listas";
 import { classeFiltro } from "./classeFiltro";
 
 const INICIAL: EstadoMarcar = { erro: null };
 
-function BotaoMarcar({ filmeId, situacao, acesa }: { filmeId: number; situacao: Situacao; acesa: boolean }) {
-  const [estado, acao, enviando] = useActionState(alternarMarcacao.bind(null, filmeId, situacao), INICIAL);
+function BotaoMarcar({ tipo, id, situacao, acesa }: { tipo: Tipo; id: number; situacao: Situacao; acesa: boolean }) {
+  const [estado, acao, enviando] = useActionState(alternarMarcacao.bind(null, tipo, id, situacao), INICIAL);
   return (
     <form action={acao} className="contents">
       <button
@@ -28,11 +28,11 @@ function BotaoMarcar({ filmeId, situacao, acesa }: { filmeId: number; situacao: 
   );
 }
 
-export default function FormularioMarcar({ filmeId, situacao }: { filmeId: number; situacao: Situacao | null }) {
+export default function FormularioMarcar({ tipo, id, situacao }: { tipo: Tipo; id: number; situacao: Situacao | null }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {SITUACOES.map((s) => (
-        <BotaoMarcar key={s} filmeId={filmeId} situacao={s} acesa={situacao === s} />
+        <BotaoMarcar key={s} tipo={tipo} id={id} situacao={s} acesa={situacao === s} />
       ))}
     </div>
   );

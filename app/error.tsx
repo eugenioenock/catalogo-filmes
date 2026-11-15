@@ -14,7 +14,7 @@ export default function Error({ error, retry }: { error: Error; retry: () => voi
         A projeção parou
       </h1>
       <p className="max-w-[52ch] text-lg text-tela/85">
-        Não conseguimos carregar os filmes do TMDB agora. Tente de novo em alguns segundos.
+        Não conseguimos carregar o catálogo do TMDB agora. Tente de novo em alguns segundos.
       </p>
       <div className="flex flex-wrap gap-3">
         <button
