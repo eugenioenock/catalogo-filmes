@@ -17,6 +17,9 @@ npm run lint     # eslint (flat config, eslint-config-next)
 npm test         # vitest run (all tests)
 npx vitest run lib/listas.test.ts          # one file
 npx vitest run -t "alternarMarcacao"       # by test name
+npm run versao                             # release: bump version from commits, update lib/versoes.json, commit + tag (no push)
+npm run versao -- --simular                # preview the next version without writing anything
+npm run versao -- --maior                  # force a major bump (2.0.0)
 ```
 
 Windows gotcha: Vitest fails every suite (`Cannot read properties of undefined (reading 'config')`, "no tests") when the cwd has a lowercase drive letter (`c:\...`, e.g. Git Bash `cd /c/...`). In Bash, `cd "C:/projetos/catalogo-filmes"` first. PowerShell is fine.
@@ -43,5 +46,7 @@ Windows gotcha: Vitest fails every suite (`Cannot read properties of undefined (
 ## Workflow
 
 `docs/CHECKLIST.md` is the user's to-do list for the app (in Portuguese). When you finish an item, tick it (`[x]`, the hash of the commit with the work, date) and move it to "Concluído" in a separate `docs: checklist` commit on the same branch (a commit cannot contain its own hash); add new pending items to the right section.
+
+**Versions.** The site shows the version from `package.json` in the footer and the history from `lib/versoes.json` at `/novidades`. After a change is merged into `main`, run `npm run versao`: `feat:` commits since the last `v*` tag bump the minor version, `fix:`/`perf:` the patch; `test:`/`docs:`/`refactor:`/`chore:` are invisible to users and release nothing. Show the user the new version and its text, then, with their OK, `git push origin main --follow-tags`. Rules live in `lib/versao.ts` (tested); `scripts/versao.ts` only reads git and writes the files. Commit subjects become the user-facing text, so write them in Portuguese for the person using the site.
 
 Feature work follows the superpowers flow: design specs in `docs/superpowers/specs/`, implementation plans in `docs/superpowers/plans/` (dated `YYYY-MM-DD-*.md`). Read the relevant spec/plan before continuing a feature.
