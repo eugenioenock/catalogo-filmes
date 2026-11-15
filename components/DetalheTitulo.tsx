@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { hrefDoCatalogo } from "@/lib/parametros";
 import type { FilmeResumo, Streaming } from "@/lib/tmdb";
-import BotoesMarcar from "./BotoesMarcar";
+import BotoesMarcar, { BotoesMarcarCarregando } from "./BotoesMarcar";
 import Cabecalho from "./Cabecalho";
 import InfoFilme from "./InfoFilme";
 import LuzAmbiente from "./LuzAmbiente";
@@ -93,7 +93,7 @@ export default function DetalheTitulo({
               style={atraso(0.7)}
             />
             <div className="mt-6">
-              <Suspense fallback={null}>
+              <Suspense fallback={<BotoesMarcarCarregando />}>
                 <BotoesMarcar tipo={titulo.tipo} id={titulo.id} />
               </Suspense>
             </div>
