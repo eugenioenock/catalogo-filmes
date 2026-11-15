@@ -42,6 +42,6 @@ Windows gotcha: Vitest fails every suite (`Cannot read properties of undefined (
 
 ## Workflow
 
-`docs/CHECKLIST.md` is the user's to-do list for the app (in Portuguese). When you finish an item, tick it (`[x]`, commit hash, date) and move it to "Concluído" in the same branch as the work; add new pending items to the right section.
+`docs/CHECKLIST.md` is the user's to-do list for the app (in Portuguese). When you finish an item, tick it (`[x]`, the hash of the commit with the work, date) and move it to "Concluído" in a separate `docs: checklist` commit on the same branch (a commit cannot contain its own hash); add new pending items to the right section.
 
 Feature work follows the superpowers flow: design specs in `docs/superpowers/specs/`, implementation plans in `docs/superpowers/plans/` (dated `YYYY-MM-DD-*.md`). Read the relevant spec/plan before continuing a feature.

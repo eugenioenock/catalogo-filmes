@@ -62,4 +62,4 @@ Catálogo
 - [x] Busca feita em Séries volta para Séries (`129003c`, 2026-11-14).
 - [x] Teste que garante que marcar um título atualiza a fileira (`0462c98`, 2026-11-14).
 - [x] Pôster que não carrega mostra o nome do título (`d2b36a7`, 2026-11-14).
-- [x] Filtro de nota diz "Nota 8 ou mais" para leitores de tela (`4435dd9`, 2026-11-14).
+- [x] Filtro de nota diz "Nota 8 ou mais" para leitores de tela (`6317041`, 2026-11-14).
